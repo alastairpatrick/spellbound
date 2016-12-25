@@ -1,53 +1,49 @@
 import RealReact from 'react';
 
-import { unwrap, isObservable } from '../spellbound-core';
-import { Component } from './Component';
+import { unwrap, isWritableObservable } from '../spellbound-core';
+
+const WRITABLE_PROPERTIES = ["value", "checked"];
 
 const has = Object.prototype.hasOwnProperty;
 
-class ObservableUnwrapper extends Component {
-  render() {
-    let { type, props, children } = this.props;
-    
-    let unwrappedProps = {};
+const createElement = (type, props, ...children) => {
+  let unwrappedProps = props;
+  let unwrappedChildren = children;
+  if (typeof type === "string") {
+    unwrappedProps = {};
     for (let n in props) {
       if (has.call(props, n))
         unwrappedProps[n] = unwrap(props[n]);
     }
+    unwrappedChildren = children.map(unwrap);
 
-    let unwrappedChildren = children.map(unwrap);
-    return RealReact.createElement(type, unwrappedProps, ...unwrappedChildren);
-  }
-}
+    let writables = {};
+    let wantsChangeHandler = false;
+    if (props) {
+      WRITABLE_PROPERTIES.forEach(n => {
+        if (isWritableObservable(props[n])) {
+          writables[n] = props[n];
+          wantsChangeHandler = true;
+        }
+      });
+    }
 
-ObservableUnwrapper.displayName = "ObservableUnwrapper";
-
-
-const createElement = (type, props, ...children) => {
-  let hasObservables = false;
-  for (let n in props) {
-    if (has.call(props, n)) {
-      if (isObservable(props[n])) {
-        hasObservables = true;
-        break;
-      }
+    if (wantsChangeHandler) {
+      let onChange = unwrappedProps.onChange;
+      unwrappedProps.onChange = function(event) {
+        if (onChange)
+          onChange.apply(this, arguments);
+        if (!event.defaultPrevented) {
+          WRITABLE_PROPERTIES.forEach(n => {
+            if (has.call(writables, n))
+              writables[n].$ = event.target[n];
+          });
+        }
+      };
     }
   }
-  if (!hasObservables) {
-    for (let i = 0; i < children.length; ++i) {
-      if (isObservable(children[i])) {
-        hasObservables = true;
-        break;
-      }
-    }
-  }
 
-  if (!hasObservables)
-    return RealReact.createElement(type, props, ...children);
-
-  return RealReact.createElement(
-    ObservableUnwrapper,
-    { type, props, children });
+  return RealReact.createElement(type, unwrappedProps, ...unwrappedChildren);
 }
 
 export {

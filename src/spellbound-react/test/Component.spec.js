@@ -54,7 +54,10 @@ describe("Component", function() {
 
     sinon.assert.notCalled(component.setState);
     observable.$ = 8;
-    sinon.assert.calledOnce(component.setState);
+    sinon.assert.notCalled(component.setState);
+    setImmediate(() => {
+      sinon.assert.calledOnce(component.setState);
+    });
   })
 
   // This is so setState is not called when server rendering: server only calls componentWillMount and not componentDidMount.
@@ -70,7 +73,10 @@ describe("Component", function() {
     observable.$ = 8;
     sinon.assert.notCalled(component.setState);
     component.componentDidMount();
-    sinon.assert.calledOnce(component.setState);
+    sinon.assert.notCalled(component.setState);
+    setImmediate(() => {
+      sinon.assert.calledOnce(component.setState);
+    });
   })
 
   it("does not render after unmount", function(done) {

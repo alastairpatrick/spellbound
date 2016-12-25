@@ -49,7 +49,7 @@ class Component extends RealReact.Component {
             this.setState(state => state)
           else
             this._status = UNMOUNTED_PENDING_SETSTATE;
-        }, { sync: true });
+        }, { sync: false });
       this._disposeGuard = dispose;
       return value;
     });

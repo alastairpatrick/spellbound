@@ -18,9 +18,14 @@ const UGLIFY_PLUGIN = new webpack.optimize.UglifyJsPlugin({
   dead_code: true
 });
 
+const COMMONS_CHUNK_PLUGIN = new webpack.optimize.CommonsChunkPlugin(
+  "spellbound",
+  "spellbound.js");
+
 module.exports = {
   entry: {
-    spellbound: path.join(__dirname, env.SRC_DIR, 'spellbound-core', 'index.js'),
+    todo: path.join(__dirname, env.SRC_DIR, 'demo', 'todo.js'),
+    spellbound: [path.join(__dirname, env.SRC_DIR, 'spellbound-core', 'index.js')],
   },
   output: {
     path: path.join(__dirname, env.CLIENT_DIR),
@@ -35,10 +40,12 @@ module.exports = {
   },
   devtool: "#source-map",
   plugins: env.IS_OPTIMIZED ? [
+    COMMONS_CHUNK_PLUGIN,
     DEFINE_PLUGIN,
     DEDUPE_PLUGIN,
     OCCURENCE_ORDER_PLUGIN,
     UGLIFY_PLUGIN,
   ] : [
+    COMMONS_CHUNK_PLUGIN,
   ],
 };

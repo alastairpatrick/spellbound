@@ -41,6 +41,8 @@ class Observable extends Uno {
   }
 
   isEqual(a, b) {
+    if (b !== null && typeof b === "object")
+      return false;
     return a === b;
   }
 

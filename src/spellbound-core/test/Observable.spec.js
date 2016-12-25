@@ -105,6 +105,27 @@ describe("Observable", function() {
     sinon.assert.notCalled(changeListener);
   })
 
+  it("does not change when equal null value written", function() {
+    observable.$ = null;
+    sinon.assert.calledOnce(changeListener);
+    observable.$ = null;
+    sinon.assert.calledOnce(changeListener);
+  })
+
+  it("change when array written, even if identical", function() {
+    observable.$ = [];
+    sinon.assert.calledOnce(changeListener);
+    observable.$ = observable.peek;
+    sinon.assert.calledTwice(changeListener);
+  })
+
+  it("change when object written, even if identical", function() {
+    observable.$ = {};
+    sinon.assert.calledOnce(changeListener);
+    observable.$ = observable.peek;
+    sinon.assert.calledTwice(changeListener);
+  })
+
   it("can unwrap non-observables", function() {
     expect(unwrap(1)).to.equal(1);
     expect(unwrap({a: 1})).to.deep.equal({a: 1});
