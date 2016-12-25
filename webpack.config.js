@@ -24,7 +24,7 @@ const COMMONS_CHUNK_PLUGIN = new webpack.optimize.CommonsChunkPlugin(
 
 module.exports = {
   entry: {
-    todo: path.join(__dirname, env.SRC_DIR, 'demo', 'todo.js'),
+    todomvc: path.join(__dirname, env.SRC_DIR, 'demo', 'todomvc', 'AppView.js'),
     spellbound: [path.join(__dirname, env.SRC_DIR, 'spellbound-core', 'index.js')],
   },
   output: {
