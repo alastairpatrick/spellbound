@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import sinon from 'sinon';
 import { expect } from 'chai';
 
-import { Observable } from '../../spellbound-core';
+import { Observable, Computed } from '../../spellbound-core';
 import React from '..';
 
 
@@ -96,5 +96,46 @@ describe("Component", function() {
       sinon.assert.notCalled(component.setState);
       done();
     });
+  })
+
+  it("preserves props available at construction", function() {
+    let component = <TestComponent foo="a"/>;
+    expect(component.props.foo).to.equal("a");
+  })
+
+  it("dependent on props object if referenced through props property", function() {
+    let component = new TestComponent();
+    let c = new Computed(() => component.props);
+    expect(c.hasDependencies).to.equal(1);
+  })
+
+  it("observer becomes stale if props property changed", function() {
+    let component = new TestComponent();
+    let listener = sinon.spy();
+    let c = new Computed(() => {
+      listener();
+      return component.props;
+    });
+    expect(c.hasDependencies).to.equal(1);
+    sinon.assert.calledOnce(listener);
+
+    component.props = {};
+    expect(c.hasDependencies).to.equal(1);
+    sinon.assert.calledTwice(listener);
+  })
+
+  it("observer becomes stale component will receive new props", function() {
+    let component = new TestComponent();
+    let listener = sinon.spy();
+    let c = new Computed(() => {
+      listener();
+      return component.props;
+    });
+    expect(c.hasDependencies).to.equal(1);
+    sinon.assert.calledOnce(listener);
+
+    component.componentWillReceiveProps({});
+    expect(c.hasDependencies).to.equal(1);
+    sinon.assert.calledTwice(listener);
   })
 })

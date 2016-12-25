@@ -1,6 +1,6 @@
 import RealReact from 'react';
 
-import { guard } from '../spellbound-kernel';
+import { didObserve, guard, willChange } from '../spellbound-kernel';
 import { unwrap } from '../spellbound-core';
 
 
@@ -37,6 +37,26 @@ class Component extends RealReact.Component {
    
     this._disposeGuard = noop;
     this._status = UNMOUNTED;
+    
+    let propsObservable = {};
+    let props = this.props;
+
+    Object.defineProperty(this, 'props', {
+      get: function() {
+        let v = props;
+        didObserve(propsObservable);
+        return v;
+      },
+      set: function(v) {
+        willChange(propsObservable);
+        props = v;
+      },
+    });
+
+    patch(this, 'componentWillReceiveProps', (original, ...args) => {
+      willChange(propsObservable);
+      return original(...args);
+    });
 
     patch(this, 'render', (original) => {
       this._disposeGuard();

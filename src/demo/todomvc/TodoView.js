@@ -1,6 +1,6 @@
 import cx from 'classnames';
 
-import { observable } from '../../spellbound-core';
+import { computed, observable } from '../../spellbound-core';
 import React from '../../spellbound-react';
 
 import { todos } from './model';
@@ -12,17 +12,16 @@ class TodoView extends React.Component {
 
     this.editText = observable("");
     this.editMode = observable(false);
+
+    this.className = computed(() => cx({
+      editing: this.editMode.$,
+      completed: this.props.todo.completed.$,
+    }));
   }
 
   render() {
     let props = this.props;
-
-    let className = cx({
-      editing: this.editMode.$,
-      completed: this.props.todo.completed.$,
-    });
-
-    return <li className={ className }>
+    return <li className={ this.className }>
              <div className="view">
                <input className="toggle"
                      type="checkbox"
