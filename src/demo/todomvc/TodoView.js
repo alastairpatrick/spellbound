@@ -37,11 +37,11 @@ class TodoView extends React.Component {
                </button>
              </div>
              <input ref="input"
-                   className="edit"
-                   value={ this.editText }
-                   onBlur={ this.onBlur.bind(this) }
-                   onKeyPress={ this.onKeyPress.bind(this) }
-                   onKeyDown={ this.onKeyDown.bind(this) }
+                    className="edit"
+                    value={ this.editText }
+                    onBlur={ this.onBlur.bind(this) }
+                    onKeyPress={ this.onKeyPress.bind(this) }
+                    onKeyDown={ this.onKeyDown.bind(this) }
              />
            </li>
   }
