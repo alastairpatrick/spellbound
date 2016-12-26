@@ -1,13 +1,10 @@
-import { Decorator, Uno } from '../spellbound-decorate';
 import { didObserve, willChange, newSymbol } from '../spellbound-kernel';
 
-const has = Object.prototype.hasOwnProperty;
 const VALUE_SYMBOL = newSymbol("value");
 
 
-class Observable extends Uno {
+class Observable {
   constructor(v) {
-    super();
     this[VALUE_SYMBOL] = v;
   }
 
@@ -156,64 +153,6 @@ const mutate = (mutator, ...vs) => {
   }
 }
 
-const initObservableObject = function() {
-  return Observable.call(this, Object.create(null));
-}
-
-Observable.Properties = ((superClass, descs) => {
-  let derived = superClass;
-  while (derived) {
-    let parent = Object.getPrototypeOf(derived);
-    if (parent === initObservableObject)
-      break;
-    
-    if (parent === Observable) {
-      Object.setPrototypeOf(derived, initObservableObject);
-      break;
-    }
-    
-    derived = parent;
-  }
-    
-  let subDescs = {};
-  for (let name in descs) {
-    if (has.call(descs, name)) {
-      subDescs[name] = Object.assign({
-        get: function() {
-          let v = this[VALUE_SYMBOL][name];
-          didObserve(this, name);
-          return v;
-        },
-        set: function(v) {
-          if (v === this[VALUE_SYMBOL][name])
-            return;
-          willChange(this, name);
-          this[VALUE_SYMBOL][name] = v;
-        },
-        enumerable: false,
-        configurable: true,
-      }, descs[name]);
-    }
-  }
-  
-  let subClass = function() {
-    superClass.apply(this, arguments);
-  };
-
-  Object.setPrototypeOf(subClass, superClass);
-
-  subClass.prototype = Object.create(superClass.prototype, Object.assign({
-    constuctor: {
-      value: subClass,
-      enumerable: false,
-      writable: true,
-      configurable: true
-    }
-  }, subDescs));
-
-  return subClass;
-})
-[Decorator]
 
 export {
   Observable,

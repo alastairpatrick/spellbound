@@ -2,7 +2,7 @@ import sinon from 'sinon';
 import { expect } from 'chai';
 
 import { addChangeListener } from '../../spellbound-kernel';
-import { Event, Observable, observable } from '../../spellbound-core';
+import { Event, observable } from '../../spellbound-core';
 import { WillChangeLog } from '..';
 
 
@@ -72,32 +72,6 @@ describe("WillChangeLog", function() {
     expect(x.$).to.equal(2);
     operations.undo();
     expect(x.$).to.equal(2);
-  })
-
-  it("can undo change to property of observable object", function() {
-    const Point = class extends Observable {
-      constructor() {
-        super();
-        this.x = 1;
-        this.y = 1;
-      }
-    }
-    [Observable.Properties({
-      x: {},
-      y: {},
-    })]
-
-    let point = new Point();
-
-    operations.watch(() => {
-      point.x = 2;
-    }); 
-    expect(point.x).to.equal(2);
-    expect(point.y).to.equal(1);
-
-    operations.undo();
-    expect(point.x).to.equal(1);
-    expect(point.y).to.equal(1);
   })
 
   it("does not interfere with change listeners", function() {
