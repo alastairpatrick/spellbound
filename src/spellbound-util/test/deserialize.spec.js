@@ -72,6 +72,24 @@ describe("deserialize", function() {
     expect(result).to.deep.equal([fn]);
   })
 
+  it("deserializes registered Object", function() {
+    let myExternal = { x: 123 };
+    let namespace = new Namespace({myExternal});
+    let result = deserialize({ $r: "myExternal" }, {
+      namespace
+    });
+    expect(result).to.equal(myExternal);
+  })
+
+  it("deserializes array of registered Object", function() {
+    let myExternal = { x: 123 };
+    let namespace = new Namespace({myExternal});
+    let result = deserialize([{ $r: "myExternal" }], {
+      namespace
+    });
+    expect(result).to.deep.equal([myExternal]);
+  })
+
   it("deserializes to unobservable object property", function() {
     class A {
       constructor() {

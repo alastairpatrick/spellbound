@@ -110,6 +110,30 @@ describe("serialize", function() {
     })).to.deep.equal(fn);
   })
 
+  it("serializes array of registered external Object", function() {
+    let myExternal = { x: 123 };
+    let namespace = new Namespace({myExternal});
+    expect(serialize([myExternal], {
+      namespace
+    })).to.deep.equal([{ $r: "myExternal" }]);
+  })
+
+  it("serializes registered external Object", function() {
+    let myExternal = { x: 123 };
+    let namespace = new Namespace({myExternal});
+    expect(serialize(myExternal, {
+      namespace
+    })).to.deep.equal({ $r: "myExternal" });
+  })
+
+  it("serializes unregistered Object", function() {
+    let myExternal = { x: 123 };
+    let namespace = new Namespace();
+    expect(serialize(myExternal, {
+      namespace
+    })).to.deep.equal({ x: 123 });
+  })
+
   it("throws if argument passed to Namespace is not an object", function() {
     class A {
     }

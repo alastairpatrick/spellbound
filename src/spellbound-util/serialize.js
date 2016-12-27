@@ -11,58 +11,58 @@ const isArray = Array.isArray;
 const objectPrototype = Object.prototype;
 
 class Namespace {
-  constructor(functions) {
-    this.functionsByName = {};
-    this.namesByFunction = new Map();
-    if (functions)
-      this.add(functions);
+  constructor(externals) {
+    this.externalsByName = {};
+    this.namesByExternal = new Map();
+    if (externals)
+      this.add(externals);
   }
 
-  add(functions) {
-    if (typeof functions !== "object")
-      throw new Error("Argument should be a map from function names to functions.");
+  add(externals) {
+    if (typeof externals !== "object")
+      throw new Error("Argument should be a map from names to externals.");
 
-    for (let name in functions) {
-      if (has.call(functions, name)) {
-        let fn = functions[name];
+    for (let name in externals) {
+      if (has.call(externals, name)) {
+        let external = externals[name];
 
-        if (has.call(this.functionsByName, name))
-          throw new Error(`Function name '${name}' already registered.`);
+        if (has.call(this.externalsByName, name))
+          throw new Error(`External name '${name}' already registered.`);
 
-        if (this.namesByFunction.has(fn))
-          throw new Error(`Function named '${name}' already registered as ${this.namesByFunction.get(fn)}.`);
+        if (this.namesByExternal.has(external))
+          throw new Error(`External named '${name}' already registered as ${this.namesByExternal.get(external)}.`);
 
-        this.functionsByName[name] = fn;
-        this.namesByFunction.set(fn, name);
+        this.externalsByName[name] = external;
+        this.namesByExternal.set(external, name);
       }
     }
   }
 
-  getFunctionByName(name) {
-    if (!has.call(this.functionsByName, name))
-      throw new Error(`Unknown function name '${name}'.`);
-    return this.functionsByName[name];
+  getExternalByName(name) {
+    if (!has.call(this.externalsByName, name))
+      throw new Error(`Unknown external name '${name}'.`);
+    return this.externalsByName[name];
   }
 
   setConstructorReference(serialized, prototype) {
     let constructor = prototype.constructor;
-    let name = this.namesByFunction.get(constructor);
+    let name = this.namesByExternal.get(constructor);
     if (name !== undefined)
       serialized.$n = name;
     else if (prototype !== objectPrototype)
       throw new Error(`Cannot serialize unregistered constuctor ${constructor.name}`);
   }
 
-  getFunctionReference(fn) {
-    let name = this.namesByFunction.get(fn);
+  getExternalReference(external) {
+    let name = this.namesByExternal.get(external);
     if (name !== undefined)
       return { $r: name };
-    return fn;
+    return external;
   }
 }
 
 class EmptyNamespace {
-  getFunctionByName(name) {
+  getExternalByName(name) {
     throw new Error(`Unknown function name '${name}'.`);
   }
 
@@ -70,8 +70,8 @@ class EmptyNamespace {
     // Do nothing
   }
 
-  getFunctionReference(fn) {
-    return fn;
+  getExternalReference(external) {
+    return external;
   }
 }
 
@@ -100,8 +100,9 @@ const serialize = (v, opts = {}) => {
 
   let u = unwrap(v);
 
-  if (typeof u === "function") 
-    return namespace.getFunctionReference(u);
+  let external = namespace.getExternalReference(u);
+  if (external !== u)
+    return external;
 
   if (!u || typeof u !== "object")
     return u;
@@ -133,8 +134,9 @@ const serialize = (v, opts = {}) => {
   const output = (v) => {
     let u = unwrap(v);
 
-    if (typeof u === "function") 
-      return namespace.getFunctionReference(u);
+    let external = namespace.getExternalReference(u);
+    if (external !== u)
+      return external;
 
     if (!u || typeof u !== "object")
       return u;
@@ -200,7 +202,7 @@ const deserialize = (serialized, opts) => {
   let namespace = options.namespace;
 
   if (typeof serialized.$r === "string")
-    return namespace.getFunctionByName(serialized.$r);
+    return namespace.getExternalByName(serialized.$r);
 
   const GRAY = {};
   let map = new Map();
@@ -234,7 +236,7 @@ const deserialize = (serialized, opts) => {
       return serialized;
 
     if (typeof serialized.$r === "string")
-      return namespace.getFunctionByName(serialized.$r);
+      return namespace.getExternalByName(serialized.$r);
 
     let addr = serialized.$r || serialized.$a || serialized;
     let entry = map.get(addr);
@@ -250,7 +252,7 @@ const deserialize = (serialized, opts) => {
     } else {
       if (entry.value === GRAY) {
         if (has.call(serialized, "$n")) {
-          let cl = namespace.getFunctionByName(serialized.$n);
+          let cl = namespace.getExternalByName(serialized.$n);
           entry.value = new cl();
         } else {
           entry.value = {};
