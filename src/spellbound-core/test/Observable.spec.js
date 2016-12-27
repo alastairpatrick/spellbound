@@ -151,62 +151,6 @@ describe("Observable", function() {
     sinon.assert.calledWith(listener, observable);
   })  
 
-  it("can deep unwrap primitive", function() {
-    expect(unwrap.deep(1)).to.equal(1);
-  })
-
-  it("can deep unwrap null", function() {
-    expect(unwrap.deep(null)).to.equal(null);
-  })
-
-  it("can deep unwrap function", function() {
-    let fn = () => undefined;
-    expect(unwrap.deep(fn)).to.equal(fn);
-  })
-
-  it("can deep unwrap observable", function() {
-    expect(unwrap.deep(observable)).to.equal("initial");
-  })
-
-  it("can deep unwrap doubly wrapped observable", function() {
-    expect(unwrap.deep(new Observable(observable))).to.equal("initial");
-  })
-
-  it("can deep unwrap object", function() {
-    expect(unwrap.deep({a: observable})).to.deep.equal({a: "initial"});
-  })
-
-  it("can deep unwrap array", function() {
-    expect(unwrap.deep([observable])).to.deep.equal(["initial"]);
-  })
-  
-  it("can deep unwrap observable of observables", function() {
-    let fn = () => undefined;
-    let a = new Observable("a");
-    let outer = new Observable({
-      a: a,
-      b: "b",
-      c: [a, "b"],
-      d: {a: 1, b: 2},
-      f: fn,
-    });
-
-    expect(unwrap.deep(outer)).to.deep.equal({
-      a: "a",
-      b: "b",
-      c: ["a", "b"],
-      d: {a: 1, b: 2},
-      f: fn,
-    });
-  })
-  
-  it("can deep unwrap cycles", function() {
-    let cyclic = new Observable();
-    cyclic.$ = { cycle: cyclic };
-    let result = unwrap.deep(cyclic);
-    expect(result.cycle).to.equal(result);
-  })
-
   it("can mutate multiple", function() {
     let odd = new Observable([]);
     let even = [];

@@ -69,7 +69,7 @@ class AppView extends React.Component {
                        checked={ this.allComplete }/>
                  <label htmlFor="toggle-all">Mark all as complete</label>
                  <ul className="todo-list">
-                   {this.todoFiltered.$.map(todo => <TodoView key={todo.id} todo={todo} />)}
+                   {this.todoFiltered.$.map(todo => <TodoView key={todo.id.$} todo={todo} />)}
                  </ul>
                </section>
                <footer className="footer" style={this.footerStyle}>

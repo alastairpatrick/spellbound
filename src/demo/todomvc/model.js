@@ -1,15 +1,18 @@
-import { autorun, computed, mutate, observable } from '../../spellbound-core';
+import { autorun, computed, isWritableObservable, mutate, observable } from '../../spellbound-core';
 import { uuid } from './util';
 
+import { serialize, deserialize, Namespace } from '../../spellbound-util';
+
+const namespace = new Namespace();
 
 class Todo {
   constructor(arg) {
     if (typeof arg === "object") {
-      this.id = arg.id;
+      this.id = observable(arg.id);
       this.title = observable(arg.title);
       this.completed = observable(arg.completed);
     } else {
-      this.id = uuid();
+      this.id = observable(uuid());
       this.title = observable(arg || "");
       this.completed = observable(false);
     }
@@ -17,7 +20,7 @@ class Todo {
 
   toJSON() {
     return {
-      id: this.id,
+      id: this.id.$,
       title: this.title.$,
       completed: this.completed.$,
     };
@@ -69,18 +72,28 @@ class TodoList {
     }
   }
 
-  load() {
-    let json = localStorage.getItem(this.key);
-    if (json) {
-      json = JSON.parse(json);
-      this.all.$ = json.map(item => new Todo(item));
-    } else {
-      this.all.$ = [];
-    }
+  toJSON() {
+    return serialize(this, {
+      namespace,
+      filter: isWritableObservable
+    });
   }
 
   save() {
-    localStorage.setItem(this.key, JSON.stringify(this.all.$));
+    localStorage.setItem(this.key, JSON.stringify(this));
+  }
+
+  load() {
+    let json = localStorage.getItem(this.key);
+    if (json) {
+      deserialize(JSON.parse(json), {
+        namespace,
+        filter: isWritableObservable,
+        target: this,
+      });
+    } else {
+      this.all.$ = [];
+    }
   }
 
   add(item) {
@@ -98,6 +111,8 @@ class TodoList {
     }
   }
 }
+
+namespace.add({TodoList, Todo});
 
 const todos = new TodoList("spellbound-todos");
 

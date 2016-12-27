@@ -1,7 +1,7 @@
 import { didObserve, willChange, newSymbol } from '../spellbound-kernel';
 
-const VALUE_SYMBOL = newSymbol("value");
 
+const VALUE_SYMBOL = newSymbol("value");
 
 class Observable {
   constructor(v) {
@@ -71,71 +71,6 @@ unwrap.within = (within, ...vs) => {
   });
 
   return within(...args);
-}
-
-unwrap.deep = (v) => {
-  let u = unwrap(v);
-  if (!u || typeof u !== "object")
-    return u;
-
-  const GRAY = {};
-  let map = new Map();
-
-  const gray = (v) => {
-    let u = unwrap(v);
-    if (!u || typeof u !== "object")
-      return;
-
-    if (!map.has(u))
-      map.set(u, GRAY);
-  };
-
-  const mappedFor = (v) => {
-    let u = unwrap(v);
-    if (!u || typeof u !== "object")
-      return u;
-
-    return map.get(u);
-  }
-
-  gray(u);
-
-  const isArray = Array.isArray;
-  const toString = Object.prototype.toString;
-  const isObject = (u) => toString.call(u) === "[object Object]";
-
-  map.forEach((_, u) => {
-    let mapped;
-    if (isArray(u)) {
-      mapped = [];
-      u.forEach(gray);
-    } else if (isObject(u)) {
-      mapped = {};
-      for (let key in u) {
-        if (Object.prototype.hasOwnProperty.call(u, key))
-          gray(u[key]);
-      }
-    } else {
-      mapped = u;
-    }
-
-    map.set(u, mapped);
-  });
-
-  map.forEach((mapped, u) => {
-    if (isArray(u)) {
-      u.forEach(el => {
-        mapped.push(mappedFor(el));
-      });
-    } else if (isObject(u)) {
-      for (let key in u) {
-        if (Object.prototype.hasOwnProperty.call(u, key))
-          mapped[key] = mappedFor(u[key]);
-      }
-    }
-  });
-
-  return map.get(u);
 }
 
 const mutate = (mutator, ...vs) => {
