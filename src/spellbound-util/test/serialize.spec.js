@@ -86,7 +86,31 @@ describe("serialize", function() {
     })).to.deep.equal({ $n: "A", a: 1, b: 2 });
   })
 
-  it("throws if argument passed to register is not an object", function() {
+  it("serializes array of registered function", function() {
+    let fn = () => undefined;
+    let namespace = new Namespace({fn});
+    expect(serialize([fn], {
+      namespace
+    })).to.deep.equal([{ $r: "fn" }]);
+  })
+
+  it("serializes registered function", function() {
+    let fn = () => undefined;
+    let namespace = new Namespace({fn});
+    expect(serialize(fn, {
+      namespace
+    })).to.deep.equal({ $r: "fn" });
+  })
+
+  it("serializes unregistered function", function() {
+    let fn = () => undefined;
+    let namespace = new Namespace();
+    expect(serialize(fn, {
+      namespace
+    })).to.deep.equal(fn);
+  })
+
+  it("throws if argument passed to Namespace is not an object", function() {
     class A {
     }
     expect(function() {

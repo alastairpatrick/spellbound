@@ -11,57 +11,67 @@ const isArray = Array.isArray;
 const objectPrototype = Object.prototype;
 
 class Namespace {
-  constructor(classes) {
-    this.classesByName = {};
-    this.namesByClass = new Map();
-    if (classes)
-      this.add(classes);
+  constructor(functions) {
+    this.functionsByName = {};
+    this.namesByFunction = new Map();
+    if (functions)
+      this.add(functions);
   }
 
-  add(classes) {
-    if (typeof classes !== "object")
-      throw new Error("Argument should be a map from class names to classes.");
+  add(functions) {
+    if (typeof functions !== "object")
+      throw new Error("Argument should be a map from function names to functions.");
 
-    for (let name in classes) {
-      if (has.call(classes, name)) {
-        let cl = classes[name];
+    for (let name in functions) {
+      if (has.call(functions, name)) {
+        let fn = functions[name];
 
-        if (has.call(this.classesByName, name))
-          throw new Error(`Class name '${name}' already registered.`);
+        if (has.call(this.functionsByName, name))
+          throw new Error(`Function name '${name}' already registered.`);
 
-        if (this.namesByClass.has(cl))
-          throw new Error(`Class named '${name}' already registered as ${this.namesByClass.get(cl)}.`);
+        if (this.namesByFunction.has(fn))
+          throw new Error(`Function named '${name}' already registered as ${this.namesByFunction.get(fn)}.`);
 
-        this.classesByName[name] = cl;
-        this.namesByClass.set(cl, name);
+        this.functionsByName[name] = fn;
+        this.namesByFunction.set(fn, name);
       }
     }
   }
 
-  getClassByName(className) {
-    if (!has.call(this.classesByName, className))
-      throw new Error(`Unknown class name '${className}'.`);
-    return this.classesByName[className];
+  getFunctionByName(name) {
+    if (!has.call(this.functionsByName, name))
+      throw new Error(`Unknown function name '${name}'.`);
+    return this.functionsByName[name];
   }
 
-  getNameByPrototype(prototype) {
+  setConstructorReference(serialized, prototype) {
     let constructor = prototype.constructor;
-    let className = this.namesByClass.get(constructor);
-    if (className)
-      return className;
+    let name = this.namesByFunction.get(constructor);
+    if (name !== undefined)
+      serialized.$n = name;
     else if (prototype !== objectPrototype)
-      throw new Error(`Cannot serialize unregistered class ${constructor.name}`);
-    return false;
+      throw new Error(`Cannot serialize unregistered constuctor ${constructor.name}`);
+  }
+
+  getFunctionReference(fn) {
+    let name = this.namesByFunction.get(fn);
+    if (name !== undefined)
+      return { $r: name };
+    return fn;
   }
 }
 
 class EmptyNamespace {
-  getClassByName(className) {
-    throw new Error(`Unknown class name '${className}'.`);
+  getFunctionByName(name) {
+    throw new Error(`Unknown function name '${name}'.`);
   }
 
-  getNameByPrototype() {
-    return false;
+  setConstructorReference() {
+    // Do nothing
+  }
+
+  getFunctionReference(fn) {
+    return fn;
   }
 }
 
@@ -78,10 +88,6 @@ const defaultFilter = (value, property, object) => {
 }
 
 const serialize = (v, opts = {}) => {
-  let u = unwrap(v);
-  if (!u || typeof u !== "object")
-    return u;
-
   let options = Object.assign({
     serialize: true,
     filter: defaultFilter,
@@ -91,6 +97,14 @@ const serialize = (v, opts = {}) => {
   let serialize = options.serialize;
   let filter = options.filter;
   let namespace = options.namespace;
+
+  let u = unwrap(v);
+
+  if (typeof u === "function") 
+    return namespace.getFunctionReference(u);
+
+  if (!u || typeof u !== "object")
+    return u;
 
   const GRAY = {};
   let map = new Map();
@@ -118,6 +132,10 @@ const serialize = (v, opts = {}) => {
 
   const output = (v) => {
     let u = unwrap(v);
+
+    if (typeof u === "function") 
+      return namespace.getFunctionReference(u);
+
     if (!u || typeof u !== "object")
       return u;
 
@@ -157,11 +175,7 @@ const serialize = (v, opts = {}) => {
         serialized.push(output(el));
       });
     } else {
-      let prototype = getPrototypeOf(u);
-      let className = namespace.getNameByPrototype(prototype);
-      if (className)
-        serialized.$n = className;
-
+      namespace.setConstructorReference(serialized, getPrototypeOf(u));
       for (let key in u) {
         let propValue = u[key];
         if (filter(propValue, key, u))
@@ -184,6 +198,9 @@ const deserialize = (serialized, opts) => {
 
   let filter = options.filter;
   let namespace = options.namespace;
+
+  if (typeof serialized.$r === "string")
+    return namespace.getFunctionByName(serialized.$r);
 
   const GRAY = {};
   let map = new Map();
@@ -216,6 +233,9 @@ const deserialize = (serialized, opts) => {
     if (!serialized || typeof serialized !== "object")
       return serialized;
 
+    if (typeof serialized.$r === "string")
+      return namespace.getFunctionByName(serialized.$r);
+
     let addr = serialized.$r || serialized.$a || serialized;
     let entry = map.get(addr);
     return entry.value;
@@ -230,7 +250,7 @@ const deserialize = (serialized, opts) => {
     } else {
       if (entry.value === GRAY) {
         if (has.call(serialized, "$n")) {
-          let cl = namespace.getClassByName(serialized.$n);
+          let cl = namespace.getFunctionByName(serialized.$n);
           entry.value = new cl();
         } else {
           entry.value = {};

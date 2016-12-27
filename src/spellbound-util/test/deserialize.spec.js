@@ -54,6 +54,24 @@ describe("deserialize", function() {
     }).to.throw();
   })
 
+  it("deserializes registered function", function() {
+    let fn = () => undefined;
+    let namespace = new Namespace({fn});
+    let result = deserialize({ $r: "fn" }, {
+      namespace
+    });
+    expect(result).to.equal(fn);
+  })
+
+  it("deserializes array of registered function", function() {
+    let fn = () => undefined;
+    let namespace = new Namespace({fn});
+    let result = deserialize([{ $r: "fn" }], {
+      namespace
+    });
+    expect(result).to.deep.equal([fn]);
+  })
+
   it("deserializes to unobservable object property", function() {
     class A {
       constructor() {
