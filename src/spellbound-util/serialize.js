@@ -1,7 +1,9 @@
 import { unwrap, isObservable } from '../spellbound-core';
 
 
-const RE_PRAGMA = /^\$/;
+const RE_MUST_ESCAPE = /^\$/;
+const RE_ESCAPED = /^\$\$/;
+const RE_PRAGMA = /^\$[^$]/;
 
 const getPrototypeOf = Object.getPrototypeOf;
 const has = Object.prototype.hasOwnProperty;
@@ -53,7 +55,17 @@ class Namespace {
   }
 }
 
-const EMPTY_NAMESPACE = new Namespace({});
+class EmptyNamespace {
+  getClassByName(className) {
+    throw new Error(`Unknown class name '${className}'.`);
+  }
+
+  getNameByPrototype() {
+    return false;
+  }
+}
+
+const EMPTY_NAMESPACE = new EmptyNamespace();
 
 const defaultFilter = (value, property, object) => {
   if (getPrototypeOf(object) === objectPrototype)
@@ -153,7 +165,7 @@ const serialize = (v, opts = {}) => {
       for (let key in u) {
         let propValue = u[key];
         if (filter(propValue, key, u))
-          serialized[key] = output(propValue);
+          serialized[key.replace(RE_MUST_ESCAPE, "$$$$")] = output(propValue);
       }
     }
   });
@@ -232,11 +244,6 @@ const deserialize = (serialized, opts) => {
         if (RE_PRAGMA.test(property))
           continue;
 
-        let target = entry.value;
-        let oldValue = target[property];
-        if (!filter(oldValue, property, target))
-          continue;
-
         gray(serialized[property]);
       }
     }
@@ -259,15 +266,17 @@ const deserialize = (serialized, opts) => {
         if (RE_PRAGMA.test(property))
           continue;
 
-        let oldValue = target[property];
-        if (!filter(oldValue, property, target))
+        let targetProperty = property.replace(RE_ESCAPED, "$$");
+
+        let oldValue = target[targetProperty];
+        if (!filter(oldValue, targetProperty, target))
           continue;
 
         let propValue = output(serialized[property]);
         if (isObservable(oldValue)) {
           oldValue.$ = propValue;
         } else {
-          target[property] = propValue;
+          target[targetProperty] = propValue;
         }
       }
     }

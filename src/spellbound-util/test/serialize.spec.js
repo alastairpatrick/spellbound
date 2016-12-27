@@ -53,9 +53,23 @@ describe("serialize", function() {
       }
     }
     let a = new A();
+    let namespace = new Namespace();
     expect(function() {
-      serialize(a);
+      serialize(a, {
+        namespace
+      });
     }).to.throw();
+  })
+
+  it("without namspace, serializes instances of non-Object classes as Ojbects", function() {
+    class A {
+      constructor() {
+        this.a = 1;
+        this.b = new Observable(2);
+      }
+    }
+    let a = new A();
+    expect(serialize(a)).to.deep.equal({ a: 1, b: 2});
   })
 
   it("serializes instances of registered classes", function() {
@@ -185,5 +199,9 @@ describe("serialize", function() {
       filter: isWritableObservable,
     });
     expect(result).to.deep.equal({ observable: 2 });
+  })
+
+  it("escapes properties beginning $", function() {
+    expect(serialize({ $z: 1, $$: 2, z$: 3 })).to.deep.equal({ $$z: 1, $$$: 2, z$: 3 });
   })
 })

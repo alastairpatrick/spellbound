@@ -192,4 +192,8 @@ describe("deserialize", function() {
     });
     expect(array).to.deep.equal([4, 5, 6]);
   })
+
+  it("unescapes escaped properties", function() {
+    expect(deserialize({ $$z: 1, $$$: 2, z$: 3 })).to.deep.equal({ $z: 1, $$: 2, z$: 3 });
+  })
 })
