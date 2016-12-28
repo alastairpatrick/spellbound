@@ -17,7 +17,21 @@ class External {
   constructor(value) {
     this.value = value;
   }
+
+  serializeObject(object, output) {
+    for (let property in object)
+      output(property, object[property]);
+  }
+
+  deserializeObject(serialized, output) {
+    for (let property in serialized) {
+      if (has.call(serialized, property))
+        output(property, serialized[property]);
+    }
+  }
 }
+
+const DEFAULT_EXTERNAL = new External();
 
 class Namespace {
   constructor(locals) {
@@ -102,16 +116,21 @@ class Namespace {
     let externalsByName = this.externalsByName.$;
     if (!has.call(externalsByName, name))
       throw new Error(`Unknown external name '${name}'.`);
-    return externalsByName[name].value;
+    return externalsByName[name];
   }
 
-  setConstructorReference(serialized, prototype) {
+  serializeObject(serialized, object, output) {
+    let prototype = getPrototypeOf(object);
     let constructor = prototype.constructor;
     let nameExternal = this.externalsByValue.$.get(constructor);
-    if (nameExternal !== undefined)
+    if (nameExternal !== undefined) {
       serialized.$n = nameExternal.name;
-    else if (prototype !== objectPrototype)
+      nameExternal.external.serializeObject(object, output);
+    } else if (prototype === objectPrototype) {
+      DEFAULT_EXTERNAL.serializeObject(object, output);
+    } else {
       throw new Error(`Cannot serialize unregistered constuctor ${constructor.name}`);
+    }
   }
 
   getExternalReference(value) {
@@ -123,8 +142,8 @@ class Namespace {
 }
 
 class EmptyNamespace extends Namespace {
-  setConstructorReference() {
-    // Do nothing
+  serializeObject(serialized, object, output) {
+    DEFAULT_EXTERNAL.serializeObject(object, output);
   }
 }
 
@@ -232,12 +251,10 @@ const serializeJS = (v, opts = {}) => {
         serialized.push(output(el));
       });
     } else {
-      namespace.setConstructorReference(serialized, getPrototypeOf(u));
-      for (let key in u) {
-        let propValue = u[key];
-        if (filter(propValue, key, u))
-          serialized[key.replace(RE_MUST_ESCAPE, "$$$$")] = output(propValue);
-      }
+      namespace.serializeObject(serialized, u, (property, propValue) => {
+        if (filter(propValue, property, u))
+          serialized[property.replace(RE_MUST_ESCAPE, "$$$$")] = output(propValue);
+      });
     }
   });
 
@@ -269,7 +286,7 @@ const deserializeJS = (serialized, opts) => {
   if (!serialized || typeof serialized !== "object")
     return serialized;
   if (typeof serialized.$r === "string")
-    return namespace.getExternalByName(serialized.$r);
+    return namespace.getExternalByName(serialized.$r).value;
 
   const GRAY = {};
   let map = new Map();
@@ -286,6 +303,7 @@ const deserializeJS = (serialized, opts) => {
     if (entry === undefined) {
       entry = {
         serialized: serialized,
+        external: DEFAULT_EXTERNAL,
         value: GRAY,
       };
       map.set(addr, entry);
@@ -303,7 +321,7 @@ const deserializeJS = (serialized, opts) => {
     if (!serialized || typeof serialized !== "object")
       return serialized;
     if (typeof serialized.$r === "string")
-      return namespace.getExternalByName(serialized.$r);
+      return namespace.getExternalByName(serialized.$r).value;
 
     let addr = serialized.$r || serialized.$a || serialized;
     let entry = map.get(addr);
@@ -319,8 +337,8 @@ const deserializeJS = (serialized, opts) => {
     } else {
       if (entry.value === GRAY) {
         if (has.call(serialized, "$n")) {
-          let cl = namespace.getExternalByName(serialized.$n);
-          entry.value = new cl();
+          entry.external = namespace.getExternalByName(serialized.$n);
+          entry.value = new (entry.external.value)();
         } else {
           entry.value = {};
         }
@@ -348,26 +366,21 @@ const deserializeJS = (serialized, opts) => {
         target[i] = output(el);
       });
     } else {
-      for (let property in serialized) {
-        if (!has.call(serialized, property))
-          continue;
-
+      entry.external.deserializeObject(serialized, (property, propValue) => {
         if (RE_PRAGMA.test(property))
-          continue;
+          return;
 
         let targetProperty = property.replace(RE_ESCAPED, "$$");
-
         let oldValue = target[targetProperty];
         if (!filter(oldValue, targetProperty, target))
-          continue;
+          return;
 
-        let propValue = output(serialized[property]);
         if (isObservable(oldValue)) {
-          oldValue.$ = propValue;
+          oldValue.$ = output(propValue);
         } else {
-          target[targetProperty] = propValue;
+          target[targetProperty] = output(propValue);
         }
-      }
+      });
     }
   });
 
