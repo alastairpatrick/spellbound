@@ -25,6 +25,22 @@ describe("deserialize", function() {
     expect(deserialize(null)).to.equal(null);
   })
 
+  it("deserializes reference to undefined", function() {
+    expect(deserialize({ $r: "?" })).to.equal(undefined);
+  })
+
+  it("deserializes reference to NaN", function() {
+    expect(deserialize({ $r: "!" })).to.be.NaN;
+  })
+
+  it("deserializes reference to Infinity", function() {
+    expect(deserialize({ $r: "+Infinity" })).to.equal(Infinity);
+  })
+
+  it("deserializes reference to NaN", function() {
+    expect(deserialize({ $r: "-Infinity" })).to.equal(-Infinity);
+  })
+
   it("deserializes function", function() {
     let fn = () => undefined;
     expect(deserialize(fn)).to.equal(fn);

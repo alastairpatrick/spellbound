@@ -25,6 +25,22 @@ describe("serialize", function() {
     expect(serialize(null)).to.equal(null);
   })
 
+  it("serializes undefined as reference", function() {
+    expect(serialize(undefined)).to.deep.equal({ $r: "?" });
+  })
+
+  it("serializes NaN as reference", function() {
+    expect(serialize(NaN)).to.deep.equal({ $r: "!" });
+  })
+
+  it("serializes Infinity as reference", function() {
+    expect(serialize(Infinity)).to.deep.equal({ $r: "+Infinity" });
+  })
+
+  it("serializes -Infinity as reference", function() {
+    expect(serialize(-Infinity)).to.deep.equal({ $r: "-Infinity" });
+  })
+
   it("serializes function", function() {
     let fn = () => undefined;
     expect(serialize(fn)).to.equal(fn);
@@ -168,16 +184,7 @@ describe("serialize", function() {
   it("serializes reference to Object in nested namespace", function() {
     let myExternal = { x: 123 };
     let inner = new Namespace({myExternal});
-    expect(inner.externalsByName.$).to.deep.equal({
-      myExternal: myExternal,
-    });
     let outer = new Namespace({inner});
-    expect(outer.localsByName.$).to.deep.equal({
-      "inner": inner,
-    });
-    expect(outer.externalsByName.$).to.deep.equal({
-      "inner.myExternal": myExternal,
-    });
     expect(outer.getExternalReference(myExternal)).to.deep.equal({ $r: "inner.myExternal" });
     expect(serialize(myExternal, {
       namespace: outer

@@ -18,24 +18,29 @@ class Namespace {
     this.localsByName = observable({});
 
     this.externalsByName = computed(() => {
-      let result = {};
-      let localsByName = this.localsByName.$;
-      for (let name in localsByName) {
-        if (!has.call(localsByName, name))
-          continue;
-        
-        let external = localsByName[name];
-        if (external instanceof Namespace) {
-          let innerNames = external.externalsByName.$;
-          for (let innerName in innerNames) {
-            if (!has.call(innerNames, innerName))
-              continue;
-            result[name + '.' + innerName] = innerNames[innerName];
-          }
-        } else {
-          result[name] = external;
+      let result = {
+        "?": undefined,
+        "!": NaN,
+        "+Infinity": Infinity,
+        "-Infinity": -Infinity,
+      };
+
+      let map = new Map();
+      map.set(this.localsByName.$, "");
+
+      map.forEach((prefix, localsByName) => {
+        for (let name in localsByName) {
+          if (!has.call(localsByName, name))
+            continue;
+          
+          let external = localsByName[name];
+          if (external instanceof Namespace)
+            map.set(external.localsByName.$, prefix + name + '.');
+          else
+            result[prefix + name] = external;
         }
-      }
+      });
+
       return result;
     });
 
@@ -46,7 +51,7 @@ class Namespace {
         if (has.call(externals, name)) {
           let external = externals[name];
           if (result.has(external))
-            throw new Error(`External named '${name}' already registered as ${result.get(external)}.`);
+            throw new Error(`External named '${name}' already registered as '${result.get(external)}'.`);
 
           result.set(external, name);
         }
@@ -103,17 +108,9 @@ class Namespace {
   }
 }
 
-class EmptyNamespace {
-  getExternalByName(name) {
-    throw new Error(`Unknown function name '${name}'.`);
-  }
-
+class EmptyNamespace extends Namespace {
   setConstructorReference() {
     // Do nothing
-  }
-
-  getExternalReference(external) {
-    return external;
   }
 }
 
