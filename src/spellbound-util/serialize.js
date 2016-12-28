@@ -1,6 +1,7 @@
-import { unwrap, isObservable } from '../spellbound-core';
+import { isObservable, computed, mutate, observable, unwrap } from '../spellbound-core';
 
 
+const RE_VALID_NAME = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
 const RE_MUST_ESCAPE = /^\$/;
 const RE_ESCAPED = /^\$\$/;
 const RE_PRAGMA = /^\$[^$]/;
@@ -12,8 +13,45 @@ const objectPrototype = Object.prototype;
 
 class Namespace {
   constructor(externals) {
-    this.externalsByName = {};
-    this.namesByExternal = new Map();
+    this.localsByName = observable({});
+
+    this.externalsByName = computed(() => {
+      let result = {};
+      let localsByName = this.localsByName.$;
+      for (let name in localsByName) {
+        if (!has.call(localsByName, name))
+          continue;
+        
+        let external = localsByName[name];
+        if (external instanceof Namespace) {
+          let innerNames = external.externalsByName.$;
+          for (let innerName in innerNames) {
+            if (!has.call(innerNames, innerName))
+              continue;
+            result[name + '.' + innerName] = innerNames[innerName];
+          }
+        } else {
+          result[name] = external;
+        }
+      }
+      return result;
+    });
+
+    this.namesByExternal = computed(() => {
+      let externals = this.externalsByName.$;
+      let result = new Map();
+      for (let name in externals) {
+        if (has.call(externals, name)) {
+          let external = externals[name];
+          if (result.has(external))
+            throw new Error(`External named '${name}' already registered as ${result.get(external)}.`);
+
+          result.set(external, name);
+        }
+      }
+      return result;
+    });
+
     if (externals)
       this.add(externals);
   }
@@ -22,31 +60,33 @@ class Namespace {
     if (typeof externals !== "object")
       throw new Error("Argument should be a map from names to externals.");
 
-    for (let name in externals) {
-      if (has.call(externals, name)) {
-        let external = externals[name];
+    mutate((localsByName) => {
+      for (let name in externals) {
+        if (!has.call(externals, name))
+          continue;
 
-        if (has.call(this.externalsByName, name))
+        if (!RE_VALID_NAME.test(name))
+          throw new Error(`Invalid name '${name}'.`);
+
+        let external = externals[name];
+        if (has.call(localsByName.$, name))
           throw new Error(`External name '${name}' already registered.`);
 
-        if (this.namesByExternal.has(external))
-          throw new Error(`External named '${name}' already registered as ${this.namesByExternal.get(external)}.`);
-
-        this.externalsByName[name] = external;
-        this.namesByExternal.set(external, name);
+        localsByName.$[name] = external;
       }
-    }
+    }, this.localsByName);
   }
 
   getExternalByName(name) {
-    if (!has.call(this.externalsByName, name))
+    let externalsByName = this.externalsByName.$;
+    if (!has.call(externalsByName, name))
       throw new Error(`Unknown external name '${name}'.`);
-    return this.externalsByName[name];
+    return externalsByName[name];
   }
 
   setConstructorReference(serialized, prototype) {
     let constructor = prototype.constructor;
-    let name = this.namesByExternal.get(constructor);
+    let name = this.namesByExternal.$.get(constructor);
     if (name !== undefined)
       serialized.$n = name;
     else if (prototype !== objectPrototype)
@@ -54,7 +94,7 @@ class Namespace {
   }
 
   getExternalReference(external) {
-    let name = this.namesByExternal.get(external);
+    let name = this.namesByExternal.$.get(external);
     if (name !== undefined)
       return { $r: name };
     return external;

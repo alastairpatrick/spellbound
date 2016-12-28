@@ -159,12 +159,41 @@ describe("serialize", function() {
     }
     let namespace = new Namespace();
     namespace.add({"A": A});
+    namespace.add({"B": A});
     expect(function() {
-      namespace.add({"B": A});
-    }).to.throw(/'B' already registered/);
+      let ignored = namespace.getExternalReference(A);
+    }).to.throw(/already registered/);
   })
 
-  it("serializes array", function() {
+  it("serializes reference to Object in nested namespace", function() {
+    let myExternal = { x: 123 };
+    let inner = new Namespace({myExternal});
+    expect(inner.externalsByName.$).to.deep.equal({
+      myExternal: myExternal,
+    });
+    let outer = new Namespace({inner});
+    expect(outer.localsByName.$).to.deep.equal({
+      "inner": inner,
+    });
+    expect(outer.externalsByName.$).to.deep.equal({
+      "inner.myExternal": myExternal,
+    });
+    expect(outer.getExternalReference(myExternal)).to.deep.equal({ $r: "inner.myExternal" });
+    expect(serialize(myExternal, {
+      namespace: outer
+    })).to.deep.equal({ $r: "inner.myExternal" });
+  })
+
+  it("throws in Namespace name contains '.'", function() {
+    let namespace = new Namespace();
+    expect(function() {
+      namespace.add({
+        "a.b": {},
+      });
+    }).to.throw(/Invalid name 'a.b'/);
+  })
+
+  it("serializes array of observable", function() {
     let observable = new Observable("initial");
     expect(serialize([observable])).to.deep.equal(["initial"]);
   })
