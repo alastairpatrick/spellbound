@@ -41,29 +41,30 @@ class Namespace {
             continue;
           
           let local = localsByName[name];
-          if (local instanceof Namespace) {
+          if (local instanceof Namespace)
             map.set(local.localsByName.$, prefix + name + '.');
-          } else {
-            if (!(local instanceof External))
-              local = new External(local);
+          else
             result[prefix + name] = local;
-          }
         }
       });
 
       return result;
     });
 
-    this.namesByExternal = computed(() => {
+    this.externalsByValue = computed(() => {
       let externals = this.externalsByName.$;
       let result = new Map();
       for (let name in externals) {
         if (has.call(externals, name)) {
-          let external = externals[name].value;
-          if (result.has(external))
-            throw new Error(`External named '${name}' already registered as '${result.get(external)}'.`);
+          let external = externals[name];
+          let value = external.value;
+          if (result.has(value))
+            throw new Error(`External named '${name}' already registered as '${result.get(value)}'.`);
 
-          result.set(external, name);
+          result.set(value, {
+            name: name,
+            external: external,
+          });
         }
       }
       return result;
@@ -89,6 +90,9 @@ class Namespace {
         if (has.call(localsByName.$, name))
           throw new Error(`External name '${name}' already registered.`);
 
+        if (!(local instanceof Namespace || local instanceof External))
+          local = new External(local);
+
         localsByName.$[name] = local;
       }
     }, this.localsByName);
@@ -103,18 +107,18 @@ class Namespace {
 
   setConstructorReference(serialized, prototype) {
     let constructor = prototype.constructor;
-    let name = this.namesByExternal.$.get(constructor);
-    if (name !== undefined)
-      serialized.$n = name;
+    let nameExternal = this.externalsByValue.$.get(constructor);
+    if (nameExternal !== undefined)
+      serialized.$n = nameExternal.name;
     else if (prototype !== objectPrototype)
       throw new Error(`Cannot serialize unregistered constuctor ${constructor.name}`);
   }
 
-  getExternalReference(external) {
-    let name = this.namesByExternal.$.get(external);
-    if (name !== undefined)
-      return { $r: name };
-    return external;
+  getExternalReference(value) {
+    let nameExternal = this.externalsByValue.$.get(value);
+    if (nameExternal !== undefined)
+      return { $r: nameExternal.name };
+    return value;
   }
 }
 
