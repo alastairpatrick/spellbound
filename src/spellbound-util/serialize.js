@@ -13,16 +13,23 @@ const objectPrototype = Object.prototype;
 
 const identity = v => v;
 
+class External {
+  constructor(value) {
+    this.value = value;
+  }
+}
+
 class Namespace {
-  constructor(externals) {
+  constructor(locals) {
     this.localsByName = observable({});
 
     this.externalsByName = computed(() => {
       let result = {
-        "?": undefined,
-        "!": NaN,
-        "+Infinity": Infinity,
-        "-Infinity": -Infinity,
+        "?": new External(undefined),
+        "!": new External(NaN),
+        "+Infinity": new External(Infinity),
+        "-Infinity": new External(-Infinity),
+        "#Date": new External(Date),
       };
 
       let map = new Map();
@@ -33,11 +40,14 @@ class Namespace {
           if (!has.call(localsByName, name))
             continue;
           
-          let external = localsByName[name];
-          if (external instanceof Namespace)
-            map.set(external.localsByName.$, prefix + name + '.');
-          else
-            result[prefix + name] = external;
+          let local = localsByName[name];
+          if (local instanceof Namespace) {
+            map.set(local.localsByName.$, prefix + name + '.');
+          } else {
+            if (!(local instanceof External))
+              local = new External(local);
+            result[prefix + name] = local;
+          }
         }
       });
 
@@ -49,7 +59,7 @@ class Namespace {
       let result = new Map();
       for (let name in externals) {
         if (has.call(externals, name)) {
-          let external = externals[name];
+          let external = externals[name].value;
           if (result.has(external))
             throw new Error(`External named '${name}' already registered as '${result.get(external)}'.`);
 
@@ -59,27 +69,27 @@ class Namespace {
       return result;
     });
 
-    if (externals)
-      this.add(externals);
+    if (locals)
+      this.add(locals);
   }
 
-  add(externals) {
-    if (typeof externals !== "object")
+  add(locals) {
+    if (typeof locals !== "object")
       throw new Error("Argument should be a map from names to externals.");
 
     mutate((localsByName) => {
-      for (let name in externals) {
-        if (!has.call(externals, name))
+      for (let name in locals) {
+        if (!has.call(locals, name))
           continue;
 
         if (!RE_VALID_NAME.test(name))
           throw new Error(`Invalid name '${name}'.`);
 
-        let external = externals[name];
+        let local = locals[name];
         if (has.call(localsByName.$, name))
           throw new Error(`External name '${name}' already registered.`);
 
-        localsByName.$[name] = external;
+        localsByName.$[name] = local;
       }
     }, this.localsByName);
   }
@@ -88,7 +98,7 @@ class Namespace {
     let externalsByName = this.externalsByName.$;
     if (!has.call(externalsByName, name))
       throw new Error(`Unknown external name '${name}'.`);
-    return externalsByName[name];
+    return externalsByName[name].value;
   }
 
   setConstructorReference(serialized, prototype) {
