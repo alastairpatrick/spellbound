@@ -37,7 +37,7 @@ describe("deserialize", function() {
     expect(deserialize({ $r: "+Infinity" })).to.equal(Infinity);
   })
 
-  it("deserializes reference to NaN", function() {
+  it("deserializes reference to -Infinity", function() {
     expect(deserialize({ $r: "-Infinity" })).to.equal(-Infinity);
   })
 

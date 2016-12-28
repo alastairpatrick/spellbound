@@ -181,7 +181,7 @@ describe("serialize", function() {
     }).to.throw(/already registered/);
   })
 
-  it("serializes reference to Object in nested namespace", function() {
+    it("serializes reference to Object in nested namespace", function() {
     let myExternal = { x: 123 };
     let inner = new Namespace({myExternal});
     let outer = new Namespace({inner});
@@ -330,7 +330,7 @@ describe("serialize", function() {
     })).to.equal('{"a":7}');
   })
 
-  it("throws error on unknwon format", function() {
+  it("throws error on unknown format", function() {
     expect(function() {
       serialize({ a: 7 }, {
         format: "foo"
