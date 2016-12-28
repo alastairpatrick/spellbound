@@ -31,7 +31,7 @@ class External {
   }
 }
 
-const DEFAULT_EXTERNAL = new External();
+const OBJECT_EXTERNAL = new External();
 
 class Namespace {
   constructor(locals) {
@@ -127,7 +127,7 @@ class Namespace {
       serialized.$n = nameExternal.name;
       nameExternal.external.serializeObject(object, output);
     } else if (prototype === objectPrototype) {
-      DEFAULT_EXTERNAL.serializeObject(object, output);
+      OBJECT_EXTERNAL.serializeObject(object, output);
     } else {
       throw new Error(`Cannot serialize unregistered constuctor ${constructor.name}`);
     }
@@ -143,7 +143,7 @@ class Namespace {
 
 class EmptyNamespace extends Namespace {
   serializeObject(serialized, object, output) {
-    DEFAULT_EXTERNAL.serializeObject(object, output);
+    OBJECT_EXTERNAL.serializeObject(object, output);
   }
 }
 
@@ -303,7 +303,7 @@ const deserializeJS = (serialized, opts) => {
     if (entry === undefined) {
       entry = {
         serialized: serialized,
-        external: DEFAULT_EXTERNAL,
+        external: OBJECT_EXTERNAL,
         value: GRAY,
       };
       map.set(addr, entry);
