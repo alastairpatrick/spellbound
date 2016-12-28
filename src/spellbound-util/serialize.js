@@ -18,12 +18,20 @@ class External {
     this.value = value;
   }
 
-  serializeObject(object, output) {
-    for (let property in object)
-      output(property, object[property]);
+  newObject() {
+    return new (this.value)();
   }
 
-  deserializeObject(serialized, output) {
+  serializeObject(object, output, options) {
+    let filter = options.filter;
+    for (let property in object) {
+      let propValue = object[property];
+      if (filter(propValue, property, object))
+        output(property, propValue);
+    }
+  }
+
+  deserializeObject(target, serialized, output) {
     for (let property in serialized) {
       if (has.call(serialized, property))
         output(property, serialized[property]);
@@ -31,20 +39,68 @@ class External {
   }
 }
 
+class DateExternal extends External {
+  constructor() {
+    super(Date);
+  }
+
+  newObject(serialized) {
+    return new Date(Date.parse(serialized.iso));
+  }
+
+  serializeObject(object, output) {
+    output("iso", object.toISOString());
+  }
+
+  deserializeObject() {
+    // Do nothing: Date initialized by newObject.
+  }
+}
+
+class RegExpExternal extends External {
+  constructor() {
+    super(RegExp);
+  }
+
+  newObject(serialized) {
+    let flags = "";
+    if (has.call(serialized, "flags"))
+      flags = serialized.flags;
+    let result = new RegExp(serialized.source, flags);
+    return result;
+  }
+
+  serializeObject(object, output) {
+    output("source", object.source);
+    if (object.flags.length)
+      output("flags", object.flags);
+    if (object.lastIndex !== 0)
+      output("lastIndex", object.lastIndex);
+  }
+
+  deserializeObject(target, serialized) {
+    if (has.call(serialized, "lastIndex"))
+      target.lastIndex = serialized.lastIndex;
+  }
+}
+
 const OBJECT_EXTERNAL = new External();
+
+const DEFAULT_EXTERNALS = {
+  ".undefined": new External(undefined),
+  ".NaN": new External(NaN),
+  "+Infinity": new External(Infinity),
+  "-Infinity": new External(-Infinity),
+  ".Date": new DateExternal(),
+  ".RegExp": new RegExpExternal(),
+}
 
 class Namespace {
   constructor(locals) {
     this.localsByName = observable({});
 
     this.externalsByName = computed(() => {
-      let result = {
-        "?": new External(undefined),
-        "!": new External(NaN),
-        "+Infinity": new External(Infinity),
-        "-Infinity": new External(-Infinity),
-        "#Date": new External(Date),
-      };
+      let result = Object.assign({}, DEFAULT_EXTERNALS);
 
       let map = new Map();
       map.set(this.localsByName.$, "");
@@ -119,15 +175,15 @@ class Namespace {
     return externalsByName[name];
   }
 
-  serializeObject(serialized, object, output) {
+  serializeObject(serialized, object, output, options) {
     let prototype = getPrototypeOf(object);
     let constructor = prototype.constructor;
     let nameExternal = this.externalsByValue.$.get(constructor);
     if (nameExternal !== undefined) {
       serialized.$n = nameExternal.name;
-      nameExternal.external.serializeObject(object, output);
+      nameExternal.external.serializeObject(object, output, options);
     } else if (prototype === objectPrototype) {
-      OBJECT_EXTERNAL.serializeObject(object, output);
+      OBJECT_EXTERNAL.serializeObject(object, output, options);
     } else {
       throw new Error(`Cannot serialize unregistered constuctor ${constructor.name}`);
     }
@@ -141,13 +197,7 @@ class Namespace {
   }
 }
 
-class EmptyNamespace extends Namespace {
-  serializeObject(serialized, object, output) {
-    OBJECT_EXTERNAL.serializeObject(object, output);
-  }
-}
-
-const EMPTY_NAMESPACE = new EmptyNamespace();
+const EMPTY_NAMESPACE = new Namespace();
 
 const defaultFilter = (value, property, object) => {
   if (getPrototypeOf(object) === objectPrototype)
@@ -252,9 +302,8 @@ const serializeJS = (v, opts = {}) => {
       });
     } else {
       namespace.serializeObject(serialized, u, (property, propValue) => {
-        if (filter(propValue, property, u))
-          serialized[property.replace(RE_MUST_ESCAPE, "$$$$")] = output(propValue);
-      });
+        serialized[property.replace(RE_MUST_ESCAPE, "$$$$")] = output(propValue);
+      }, options);
     }
   });
 
@@ -338,7 +387,7 @@ const deserializeJS = (serialized, opts) => {
       if (entry.value === GRAY) {
         if (has.call(serialized, "$n")) {
           entry.external = namespace.getExternalByName(serialized.$n);
-          entry.value = new (entry.external.value)();
+          entry.value = entry.external.newObject(serialized, options);
         } else {
           entry.value = {};
         }
@@ -366,7 +415,7 @@ const deserializeJS = (serialized, opts) => {
         target[i] = output(el);
       });
     } else {
-      entry.external.deserializeObject(serialized, (property, propValue) => {
+      entry.external.deserializeObject(target, serialized, (property, propValue) => {
         if (RE_PRAGMA.test(property))
           return;
 
@@ -380,7 +429,7 @@ const deserializeJS = (serialized, opts) => {
         } else {
           target[targetProperty] = output(propValue);
         }
-      });
+      }, options);
     }
   });
 

@@ -26,11 +26,11 @@ describe("serialize", function() {
   })
 
   it("serializes undefined as reference", function() {
-    expect(serialize(undefined)).to.deep.equal({ $r: "?" });
+    expect(serialize(undefined)).to.deep.equal({ $r: ".undefined" });
   })
 
   it("serializes NaN as reference", function() {
-    expect(serialize(NaN)).to.deep.equal({ $r: "!" });
+    expect(serialize(NaN)).to.deep.equal({ $r: ".NaN" });
   })
 
   it("serializes Infinity as reference", function() {
@@ -61,6 +61,40 @@ describe("serialize", function() {
     expect(serialize({a: observable})).to.deep.equal({a: "initial"});
   })
 
+  it("serializes Date", function() {
+    let str = "Mon, 25 Dec 1995 13:30:00 GMT"
+    expect(serialize(new Date(str))).to.deep.equal({
+      $n: ".Date",
+      iso: "1995-12-25T13:30:00.000Z",
+    });
+  })
+
+  it("serializes RegExp", function() {
+    expect(serialize(/abc/)).to.deep.equal({
+      $n: ".RegExp",
+      source: "abc",
+    });
+  })
+
+  it("serializes RegExp with flags", function() {
+    expect(serialize(/abc/g)).to.deep.equal({
+      $n: ".RegExp",
+      source: "abc",
+      flags: "g",
+    });
+  })
+
+  it("serializes RegExp with non-zero lastIndex", function() {
+    let re = /abc/g;
+    re.lastIndex = 1;
+    expect(serialize(re)).to.deep.equal({
+      $n: ".RegExp",
+      source: "abc",
+      flags: "g",
+      lastIndex: 1,
+    });
+  })
+
   it("cannot serialize instances of unregistered classes", function() {
     class A {
       constructor() {
@@ -75,17 +109,6 @@ describe("serialize", function() {
         namespace
       });
     }).to.throw();
-  })
-
-  it("without namspace, serializes instances of non-Object classes as Ojbects", function() {
-    class A {
-      constructor() {
-        this.a = 1;
-        this.b = new Observable(2);
-      }
-    }
-    let a = new A();
-    expect(serialize(a)).to.deep.equal({ a: 1, b: 2});
   })
 
   it("serializes instances of registered classes", function() {

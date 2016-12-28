@@ -26,11 +26,11 @@ describe("deserialize", function() {
   })
 
   it("deserializes reference to undefined", function() {
-    expect(deserialize({ $r: "?" })).to.equal(undefined);
+    expect(deserialize({ $r: ".undefined" })).to.equal(undefined);
   })
 
   it("deserializes reference to NaN", function() {
-    expect(deserialize({ $r: "!" })).to.be.NaN;
+    expect(deserialize({ $r: ".NaN" })).to.be.NaN;
   })
 
   it("deserializes reference to Infinity", function() {
@@ -48,6 +48,52 @@ describe("deserialize", function() {
 
   it("deserializes Object", function() {
     expect(deserialize({ a: 1 })).to.deep.equal({ a: 1 });
+  })
+
+  it("deserializes Date", function() {
+    let dateStr = "1995-12-25T13:30:00.000Z";
+    let result = deserialize({
+      $n: ".Date",
+      "iso": dateStr,
+    })
+    expect(result).to.be.instanceof(Date);
+    expect(result.toISOString()).to.equal(dateStr);
+  })
+
+  it("deserializes RegExp", function() {
+    let result = deserialize({
+      $n: ".RegExp",
+      source: "abc",
+    })
+    expect(result).to.be.instanceof(RegExp);
+    expect(result.source).to.equal("abc");
+    expect(result.flags).to.equal("");
+    expect(result.lastIndex).to.equal(0);
+  })
+
+  it("deserializes RegExp with flags", function() {
+    let result = deserialize({
+      $n: ".RegExp",
+      source: "abc",
+      flags: "g",
+    })
+    expect(result).to.be.instanceof(RegExp);
+    expect(result.source).to.equal("abc");
+    expect(result.flags).to.equal("g");
+    expect(result.lastIndex).to.equal(0);
+  })
+
+  it("deserializes RegExp with lastIndex", function() {
+    let result = deserialize({
+      $n: ".RegExp",
+      source: "abc",
+      flags: "g",
+      lastIndex: 1,
+    })
+    expect(result).to.be.instanceof(RegExp);
+    expect(result.source).to.equal("abc");
+    expect(result.flags).to.equal("g");
+    expect(result.lastIndex).to.equal(1);
   })
 
   it("deserializes object of registered class", function() {
