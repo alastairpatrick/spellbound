@@ -278,6 +278,41 @@ describe("serialize", function() {
     expect(result).to.deep.equal({ observable: 2 });
   })
 
+  it("transforms number", function() {
+    let result = serialize(1, {
+      transform: v => v + 1,
+    });
+    expect(result).to.equal(2);
+  })
+
+  it("transforms object properties", function() {
+    let obj = {
+      number: 1,
+    };
+    let result = serialize(obj, {
+      transform: v => {
+        if (typeof v === "number")
+          return v + 1;
+        return v;
+      },
+    });
+    expect(result).to.deep.equal({ number: 2 });
+  })
+
+  it("can transfrom to object that is itself recursively serialized", function() {
+    let obj = {
+      number: 1,
+    };
+    let result = serialize(["magic"], {
+      transform: v => {
+        if (v === "magic")
+          return obj;
+        return v;
+      },
+    });
+    expect(result).to.deep.equal([{ number: 1 }]);
+  })
+
   it("escapes properties beginning $", function() {
     expect(serialize({ $z: 1, $$: 2, z$: 3 })).to.deep.equal({ $$z: 1, $$$: 2, z$: 3 });
   })

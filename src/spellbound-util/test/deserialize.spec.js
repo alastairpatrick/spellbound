@@ -211,7 +211,7 @@ describe("deserialize", function() {
     expect(result.a.b).to.equal(7);
   })
 
-  it("deserializes on to target Object", function() {
+  it("deserializes to target Object", function() {
     let obj = {
       a: 1
     };
@@ -221,13 +221,49 @@ describe("deserialize", function() {
     expect(obj).to.deep.equal({ a: 2 });
   })
 
-  it("deserializes on to target array", function() {
+  it("deserializes to target array", function() {
     let array = [1, 2, 3];
     deserialize([4, 5, 6], {
       target: array
     });
     expect(array).to.deep.equal([4, 5, 6]);
   })
+
+  it("transforms number", function() {
+    let result = deserialize(1, {
+      transform: v => v + 1,
+    });
+    expect(result).to.equal(2);
+  });
+
+  it("transforms object properties", function() {
+    let obj = {
+      number: 1,
+    };
+    let result = deserialize(obj, {
+      transform: v => {
+        if (typeof v === "number")
+          return v + 1;
+        return v;
+      },
+    });
+    expect(result).to.deep.equal({ number: 2 });
+  });
+
+  it("can transform to object that is itself recursively deserialized", function() {
+    let obj = {
+      $a: 1,
+      number: 1,
+    };
+    let result = deserialize([{ $r: 1 }, "magic"], {
+      transform: v => {
+        if (v === "magic")
+          return obj;
+        return v;
+      },
+    });
+    expect(result).to.deep.equal([{ number: 1 }, { number: 1 }]);
+  });
 
   it("unescapes escaped properties", function() {
     expect(deserialize({ $$z: 1, $$$: 2, z$: 3 })).to.deep.equal({ $z: 1, $$: 2, z$: 3 });
@@ -239,7 +275,7 @@ describe("deserialize", function() {
     })).to.deep.equal({ a: 7 });
   });
 
-  it("throws exception on unknwon format", function() {
+  it("throws exception on unknown format", function() {
     expect(function() {
       deserialize('{"a": 7}', {
         format: "foo",

@@ -11,6 +11,8 @@ const has = Object.prototype.hasOwnProperty;
 const isArray = Array.isArray;
 const objectPrototype = Object.prototype;
 
+const identity = v => v;
+
 class Namespace {
   constructor(externals) {
     this.localsByName = observable({});
@@ -132,13 +134,15 @@ const serializeJS = (v, opts = {}) => {
     serialize: true,
     filter: defaultFilter,
     namespace: EMPTY_NAMESPACE,
+    transform: unwrap,
   }, opts);
 
   let serialize = options.serialize;
   let filter = options.filter;
   let namespace = options.namespace;
+  let transform = options.transform;
 
-  let u = unwrap(v);
+  let u = transform(v);
 
   let external = namespace.getExternalReference(u);
   if (external !== u)
@@ -152,7 +156,7 @@ const serializeJS = (v, opts = {}) => {
   let addr = 0;
 
   const gray = (v) => {
-    let u = unwrap(v);
+    let u = transform(v);
     if (!u || typeof u !== "object")
       return;
 
@@ -172,7 +176,7 @@ const serializeJS = (v, opts = {}) => {
   };
 
   const output = (v) => {
-    let u = unwrap(v);
+    let u = transform(v);
 
     let external = namespace.getExternalReference(u);
     if (external !== u)
@@ -233,25 +237,26 @@ const serialize = (u, opts = {}) => {
   let js = serializeJS(u, opts);
   let format = opts.format || "js";
   if (format === "js")
-    return js;
-  else if (format === "json")
+    return js;  
+  if (format === "json")
     return JSON.stringify(js);
-  else
-    throw new Error(`Unknown format '${format}'.`);
+  throw new Error(`Unknown format '${format}'.`);
 }
 
 const deserializeJS = (serialized, opts) => {
-  if (!serialized || typeof serialized !== "object")
-    return serialized;
-
   let options = Object.assign({
     filter: defaultFilter,
     namespace: EMPTY_NAMESPACE,
+    transform: identity,
   }, opts);
 
   let filter = options.filter;
   let namespace = options.namespace;
+  let transform = options.transform;
 
+  serialized = transform(serialized);
+  if (!serialized || typeof serialized !== "object")
+    return serialized;
   if (typeof serialized.$r === "string")
     return namespace.getExternalByName(serialized.$r);
 
@@ -259,9 +264,9 @@ const deserializeJS = (serialized, opts) => {
   let map = new Map();
 
   const gray = (serialized) => {
+    serialized = transform(serialized);
     if (!serialized || typeof serialized !== "object")
       return;
-
     if (serialized.$r)
       return;
       
@@ -283,9 +288,9 @@ const deserializeJS = (serialized, opts) => {
     entry.value = options.target;
 
   const output = (serialized) => {
+    serialized = transform(serialized);
     if (!serialized || typeof serialized !== "object")
       return serialized;
-
     if (typeof serialized.$r === "string")
       return namespace.getExternalByName(serialized.$r);
 
