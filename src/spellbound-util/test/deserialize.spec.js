@@ -232,4 +232,18 @@ describe("deserialize", function() {
   it("unescapes escaped properties", function() {
     expect(deserialize({ $$z: 1, $$$: 2, z$: 3 })).to.deep.equal({ $z: 1, $$: 2, z$: 3 });
   })
+
+  it("can parse json", function() {
+    expect(deserialize('{"a": 7}', {
+      format: "json",
+    })).to.deep.equal({ a: 7 });
+  });
+
+  it("throws exception on unknwon format", function() {
+    expect(function() {
+      deserialize('{"a": 7}', {
+        format: "foo",
+      });
+    }).to.throw(/Unknown format 'foo'/);
+  });
 })

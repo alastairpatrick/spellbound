@@ -127,7 +127,7 @@ const defaultFilter = (value, property, object) => {
   return true;
 }
 
-const serialize = (v, opts = {}) => {
+const serializeJS = (v, opts = {}) => {
   let options = Object.assign({
     serialize: true,
     filter: defaultFilter,
@@ -229,7 +229,18 @@ const serialize = (v, opts = {}) => {
   return entry.serialized;
 }
 
-const deserialize = (serialized, opts) => {
+const serialize = (u, opts = {}) => {
+  let js = serializeJS(u, opts);
+  let format = opts.format || "js";
+  if (format === "js")
+    return js;
+  else if (format === "json")
+    return JSON.stringify(js);
+  else
+    throw new Error(`Unknown format '${format}'.`);
+}
+
+const deserializeJS = (serialized, opts) => {
   if (!serialized || typeof serialized !== "object")
     return serialized;
 
@@ -345,6 +356,18 @@ const deserialize = (serialized, opts) => {
   });
 
   return entry.value;
+}
+
+const deserialize = (serialized, opts = {}) => {
+  let format = opts.format || "js";
+  let js;
+  if (format === "js")
+    js = serialized;
+  else if (format === "json")
+    js = JSON.parse(serialized);
+  else
+    throw new Error(`Unknown format '${format}'.`);
+  return deserializeJS(js, opts);
 }
 
 export {

@@ -72,24 +72,22 @@ class TodoList {
     }
   }
 
-  toJSON() {
-    return serialize(this, {
-      namespace,
-      filter: isWritableObservable
-    });
-  }
-
   save() {
-    localStorage.setItem(this.key, JSON.stringify(this));
+    localStorage.setItem(this.key, serialize(this, {
+      filter: isWritableObservable,
+      namespace,
+      format: "json",
+    }));
   }
 
   load() {
     let json = localStorage.getItem(this.key);
     if (json) {
-      deserialize(JSON.parse(json), {
-        namespace,
-        filter: isWritableObservable,
+      deserialize(json, {
         target: this,
+        filter: isWritableObservable,
+        namespace,
+        format: "json",
       });
     } else {
       this.all.$ = [];

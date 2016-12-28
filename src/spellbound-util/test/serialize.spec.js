@@ -281,4 +281,18 @@ describe("serialize", function() {
   it("escapes properties beginning $", function() {
     expect(serialize({ $z: 1, $$: 2, z$: 3 })).to.deep.equal({ $$z: 1, $$$: 2, z$: 3 });
   })
+
+  it("can stringify to json", function() {
+    expect(serialize({ a: 7 }, {
+      format: "json"
+    })).to.equal('{"a":7}');
+  })
+
+  it("throws error on unknwon format", function() {
+    expect(function() {
+      serialize({ a: 7 }, {
+        format: "foo"
+      });
+    }).to.throw(/Unknown format 'foo'/);
+  })
 })
