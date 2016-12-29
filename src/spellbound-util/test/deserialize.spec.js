@@ -96,6 +96,25 @@ describe("deserialize", function() {
     expect(result.lastIndex).to.equal(1);
   })
 
+  it("deserializes dense Array", function() {
+    expect(deserialize([1, 2, 3])).to.deep.equal([1, 2, 3]);
+  })
+
+  it("deserializes sparse Array", function() {
+    let result = deserialize({
+      $n: ".SparseArray",
+      length: 4,
+      values: [0, 'a', 2, 'c'],
+    });
+
+    expect(result.length).to.equal(4);
+    let elements = {};
+    result.forEach((el, i) => {
+      elements[i] = el;
+    });
+    expect(elements).to.deep.equal({"0": 'a', "2": 'c'});
+  })
+
   it("deserializes Set and retains order", function() {
     let result = deserialize({
       $n: ".Set",

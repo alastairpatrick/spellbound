@@ -95,8 +95,21 @@ describe("serialize", function() {
     });
   })
 
-  it("serializes Array", function() {
+  it("serializes dense Array", function() {
     expect(serialize([1, 2, 3])).to.deep.equal([1, 2, 3]);
+  })
+
+  it("serializes sparse Array", function() {
+    let a = ['a', 'b', 'c', 'd'];
+    delete a[1];
+    delete a[3];
+    expect(a.length).to.equal(4);
+
+    expect(serialize(a)).to.deep.equal({
+      $n: ".SparseArray",
+      length: 4,
+      values: [0, 'a', 2, 'c'],
+    });
   })
 
   it("serializes Set and retains order", function() {

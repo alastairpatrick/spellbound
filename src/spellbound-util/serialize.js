@@ -150,6 +150,37 @@ class SetExternal extends External {
   }
 }
 
+class SparseArrayExternal extends External {
+  constructor() {
+    super(Array);
+  }
+
+  newObject(serialized) {
+    return new Array(serialized.length);
+  }
+
+  serializeObject(object, output) {
+    let values = [];
+    object.forEach((el, i) => {
+      values.push(i, output(el));
+    });
+    return {
+      values,
+      length: object.length,
+    };
+  }
+
+  deserializeObject(target, serialized, output) {
+    let values = serialized.values;
+    for (let i = 0; i < values.length; ++i) {
+      let key = values[i];
+      let value = output(values[i + 1]);
+      if (target)
+        target[key] = value;
+    }
+  }
+}
+
 const OBJECT_EXTERNAL = new External();
 
 const DEFAULT_EXTERNALS = {
@@ -158,9 +189,10 @@ const DEFAULT_EXTERNALS = {
   "+Infinity": new External(Infinity),
   "-Infinity": new External(-Infinity),
   ".Date": new DateExternal(),
+  ".Map": new MapExternal(),
   ".RegExp": new RegExpExternal(),
   ".Set": new SetExternal(),
-  ".Map": new MapExternal(),
+  ".SparseArray": new SparseArrayExternal(),
 }
 
 class Namespace {
@@ -348,7 +380,15 @@ const serializeJS = (v, opts = {}) => {
   map.forEach((entry, u) => {
     if (isArray(u)) {
       entry.serialized = [];
-      u.forEach(gray);
+      let count = 0;
+      u.forEach(value => {
+        gray(value);
+        ++count;
+      });
+      if (count === u.length)
+        entry.serialized = [];  // for dense array
+      else
+        entry.serialized = {};  // for sparse array
     } else {
       entry.serialized = {};
       namespace.serializeObject(u, gray, options);
@@ -362,7 +402,7 @@ const serializeJS = (v, opts = {}) => {
     if (entry.ref)
       serialized.$a = entry.ref.$r;
 
-    if (isArray(u)) {
+    if (isArray(u) && isArray(serialized)) {
       u.forEach(el => {
         serialized.push(output(el));
       });
