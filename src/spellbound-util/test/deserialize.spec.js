@@ -9,6 +9,12 @@ describe("deserialize", function() {
     expect(deserialize(7)).to.equal(7);
   })
 
+  it("deserializes Number object", function() {
+    let result = deserialize({ $n: ".Number", value: 7 });
+    expect(result).to.be.instanceof(Number);
+    expect(result.valueOf()).to.equal(7);
+  })
+
   it("deserializes string to itself", function() {
     expect(deserialize("hello")).to.equal("hello");
   })
@@ -19,6 +25,12 @@ describe("deserialize", function() {
 
   it("deserializes false to itself", function() {
     expect(deserialize(false)).to.equal(false);
+  })
+
+  it("deserializes Boolean object", function() {
+    let result = deserialize({ $n: ".Boolean", value: true });
+    expect(result).to.be.instanceof(Boolean);
+    expect(result.valueOf()).to.equal(true);
   })
 
   it("deserializes null to itself", function() {
@@ -146,6 +158,68 @@ describe("deserialize", function() {
 
     expect(keys).to.deep.equal([1, 3, 2, {}]);
     expect(values).to.deep.equal(["a", "c", "b", undefined]);
+  })
+
+  it("deserializes ArrayBuffer", function() {
+
+    let result = deserialize({
+      $n: ".ArrayBuffer",
+      data: "ABCD",
+      byteLength: 4,
+    });
+    expect(result).to.be.instanceof(ArrayBuffer);
+    expect(result.byteLength).to.equal(4);
+
+    let view = new Uint8Array(result);
+    expect(view.reduce((prev, curr) => prev.concat(curr), [])).to.deep.equal([
+      65, 66, 67, 68
+    ])
+  })
+
+  it("deserializes Uint8Array", function() {
+    let result = deserialize({
+      $n: ".Uint8Array",
+      byteOffset: 0,
+      length: 4,
+      buffer: {
+        $n: ".ArrayBuffer",
+        data: "ABCD",
+        byteLength: 4,
+      }
+    });
+
+    expect(result).to.be.instanceof(Uint8Array);
+    expect(result.length).to.equal(4);
+    expect(result.reduce((prev, curr) => prev.concat(curr), [])).to.deep.equal([
+      65, 66, 67, 68
+    ])
+  })
+
+  it("deserializes pair of Uint8Array sharing buffer", function() {
+    let result = deserialize([{
+      $n: ".Uint8Array",
+      byteOffset: 0,
+      length: 4,
+      buffer: {
+        $r: 1,
+      }
+    }, {
+      $n: ".Uint8Array",
+      byteOffset: 0,
+      length: 4,
+      buffer: {
+        $n: ".ArrayBuffer",
+        $a: 1,
+        data: "ABCD",
+        byteLength: 4,
+      }
+    }]);
+
+    expect(result[0]).to.be.instanceof(Uint8Array);
+    expect(result[0].length).to.equal(4);
+    expect(result[1]).to.be.instanceof(Uint8Array);
+    expect(result[1].length).to.equal(4);
+    expect(result[1].buffer).to.equal(result[1].buffer);
   })
 
   it("deserializes object of registered class", function() {

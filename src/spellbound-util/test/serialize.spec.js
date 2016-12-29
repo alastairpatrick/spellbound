@@ -9,6 +9,10 @@ describe("serialize", function() {
     expect(serialize(7)).to.equal(7);
   })
 
+  it("serializes Number object", function() {
+    expect(serialize(new Number(7))).to.deep.equal({ $n: ".Number", value: 7 });
+  })
+
   it("serializes string to itself", function() {
     expect(serialize("hello")).to.equal("hello");
   })
@@ -19,6 +23,10 @@ describe("serialize", function() {
 
   it("serializes false to itself", function() {
     expect(serialize(false)).to.equal(false);
+  })
+
+  it("serializes Boolean object", function() {
+    expect(serialize(new Boolean(true))).to.deep.equal({ $n: ".Boolean", value: true });
   })
 
   it("serializes null to itself", function() {
@@ -133,6 +141,51 @@ describe("serialize", function() {
     expect(serialize(set)).to.deep.equal({
       $n: ".Map",
       values: [1, "a", 3, "c", 2, "b", {}, { $r: ".undefined" }],
+    });
+  })
+
+  it("serializes Map and retains order", function() {
+    let set = new Map();
+    set.set(1, "a");
+    set.set(3, "c");
+    set.set(2, "b");
+    set.set({}, undefined);
+    expect(serialize(set)).to.deep.equal({
+      $n: ".Map",
+      values: [1, "a", 3, "c", 2, "b", {}, { $r: ".undefined" }],
+    });
+  })
+
+  it("serializes ArrayBuffer", function() {
+    let view = new Uint8Array(4);
+    view[0] = 65;
+    view[1] = 66;
+    view[2] = 67;
+    view[3] = 68;
+
+    expect(serialize(view.buffer)).to.deep.equal({
+      $n: ".ArrayBuffer",
+      data: "ABCD",
+      byteLength: 4,
+    });
+  })
+
+  it("serializes Uint8Array", function() {
+    let view = new Uint8Array(4);
+    view[0] = 65;
+    view[1] = 66;
+    view[2] = 67;
+    view[3] = 68;
+
+    expect(serialize(view)).to.deep.equal({
+      $n: ".Uint8Array",
+      byteOffset: 0,
+      length: 4,
+      buffer: {
+        $n: ".ArrayBuffer",
+        data: "ABCD",
+        byteLength: 4,
+      }
     });
   })
 

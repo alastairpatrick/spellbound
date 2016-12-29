@@ -13,6 +13,16 @@ const objectPrototype = Object.prototype;
 
 const identity = v => v;
 
+const GRAY = { GRAY: true };
+
+const ResolveError = function (message) {
+  this.name = 'ResolveError';
+  this.message = message || 'Error resolving reference';
+  this.stack = (new Error()).stack;
+}
+ResolveError.prototype = Object.create(Error.prototype);
+ResolveError.prototype.constructor = ResolveError;
+
 class External {
   constructor(value) {
     this.value = value;
@@ -47,6 +57,35 @@ class External {
     }
 
     return result;
+  }
+}
+
+class ArrayBufferExternal extends External {
+  constructor() {
+    super(ArrayBuffer);
+  }
+
+  newObject(serialized) {
+    return new ArrayBuffer(serialized.byteLength);
+  }
+
+  serializeObject(object) {
+    let view = new Uint8Array(object);
+    let dataStr = view.reduce((prev, curr) => prev + String.fromCharCode(curr), "")
+    return {
+      data: dataStr,
+      byteLength: object.byteLength,
+    };
+  }
+
+  deserializeObject(target, serialized) {
+    if (!target)
+      return;
+
+    let view = new Uint8Array(target);
+    let data = serialized.data;
+    for (let i = 0; i < data.length; ++i)
+      view[i] = data.charCodeAt(i);
   }
 }
 
@@ -94,6 +133,22 @@ class MapExternal extends External {
   }
 }
 
+class PrimitiveExternal extends External {
+  newObject(serialized) {
+    return new (this.value)(serialized.value);
+  }
+
+  serializeObject(object, output) {
+    return {
+      value: output(object.valueOf()),
+    };
+  }
+
+  deserializeObject() {
+    // Do nothing: initialized by newObject.
+  }
+}
+
 class RegExpExternal extends External {
   constructor() {
     super(RegExp);
@@ -123,7 +178,7 @@ class RegExpExternal extends External {
   }
 
   deserializeObject() {
-    // Do nothing: RegExp initialized by newObject.
+    // Do nothing: initialized by newObject.
   }
 }
 
@@ -181,6 +236,27 @@ class SparseArrayExternal extends External {
   }
 }
 
+class TypedArrayExternal extends External {
+  newObject(serialized, output) {
+    let buffer = output(serialized.buffer);
+    if (buffer === GRAY)
+      return GRAY;
+    return new (this.value)(buffer, serialized.byteOffset, serialized.length);
+  }
+
+  serializeObject(object, output) {
+    return {
+      buffer: output(object.buffer),
+      byteOffset: object.byteOffset,
+      length: object.length,
+    };
+  }
+
+  deserializeObject() {
+    // Do nothing: initialized by newObject.
+  }
+}
+
 const OBJECT_EXTERNAL = new External();
 
 const DEFAULT_EXTERNALS = {
@@ -188,11 +264,15 @@ const DEFAULT_EXTERNALS = {
   ".NaN": new External(NaN),
   "+Infinity": new External(Infinity),
   "-Infinity": new External(-Infinity),
+  ".ArrayBuffer": new ArrayBufferExternal(),
+  ".Boolean": new PrimitiveExternal(Boolean),
   ".Date": new DateExternal(),
   ".Map": new MapExternal(),
+  ".Number": new PrimitiveExternal(Number),
   ".RegExp": new RegExpExternal(),
   ".Set": new SetExternal(),
   ".SparseArray": new SparseArrayExternal(),
+  ".Uint8Array": new TypedArrayExternal(Uint8Array),
 }
 
 class Namespace {
@@ -333,7 +413,6 @@ const serializeJS = (v, opts = {}) => {
   if (!u || typeof u !== "object")
     return u;
 
-  const GRAY = {};
   let map = new Map();
   let addr = 0;
 
@@ -441,8 +520,22 @@ const deserializeJS = (serialized, opts) => {
   if (typeof serialized.$r === "string")
     return namespace.getExternalByName(serialized.$r).value;
 
-  const GRAY = {};
   let map = new Map();
+
+  const queue = (serialized) => {
+    let addr = serialized.$a || serialized;
+    let entry = map.get(addr);
+    if (entry === undefined) {
+      entry = {
+        serialized: serialized,
+        addr: addr,
+        external: OBJECT_EXTERNAL,
+        value: GRAY,
+      };
+      map.set(addr, entry);
+    }
+    return entry;
+  }
 
   const gray = (serialized) => {
     serialized = transform(serialized);
@@ -451,21 +544,11 @@ const deserializeJS = (serialized, opts) => {
     if (serialized.$r)
       return;
       
-    let addr = serialized.$a || serialized;
-    let entry = map.get(addr);
-    if (entry === undefined) {
-      entry = {
-        serialized: serialized,
-        external: OBJECT_EXTERNAL,
-        value: GRAY,
-      };
-      map.set(addr, entry);
-    }
-
-    return entry;
+    queue(serialized);
+    return GRAY;
   }
 
-  let entry = gray(serialized);
+  let entry = queue(serialized);
   if (options.target)
     entry.value = options.target;
 
@@ -478,9 +561,13 @@ const deserializeJS = (serialized, opts) => {
 
     let addr = serialized.$r || serialized.$a || serialized;
     let entry = map.get(addr);
+    if (entry === undefined || entry.value === GRAY)
+      throw new ResolveError(`Cannot resolve ${serialized}.`);
+
     return entry.value;
   }
 
+  let deferred = [];
   map.forEach(entry => {
     let serialized = entry.serialized;
     if (isArray(serialized)) {
@@ -491,7 +578,8 @@ const deserializeJS = (serialized, opts) => {
       if (entry.value === GRAY) {
         if (has.call(serialized, "$n")) {
           entry.external = namespace.getExternalByName(serialized.$n);
-          entry.value = entry.external.newObject(serialized, options);
+          entry.external.newObject(entry.serialized, gray, options);
+          deferred.push(entry);
         } else {
           entry.value = {};
         }
@@ -500,6 +588,32 @@ const deserializeJS = (serialized, opts) => {
       entry.external.deserializeObject(null, serialized, gray, options);
     }
   });
+
+  const createDeferred = entry => {
+    if (entry.value === GRAY) {
+      try {
+        entry.value = entry.external.newObject(entry.serialized, output, options);
+        if (entry.value === GRAY)
+          deferred.push(entry);
+      } catch (e) {
+        if (e instanceof ResolveError)
+          deferred.push(entry);
+        else
+          throw e;
+      }
+    }
+  }
+
+  // Reversing first is unnecessary but it generally results in fewer iterations
+  // of the following loop.
+  deferred.reverse();
+  while (deferred.length) {
+    let todo = deferred;
+    deferred = [];
+    todo.forEach(createDeferred);
+    if (deferred.length >= todo.length)
+      throw new Error(`Cannot instantiate ${deferred.length} objects.`);
+  }
 
   map.forEach(entry => {
     let serialized = entry.serialized;
