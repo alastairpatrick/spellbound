@@ -96,6 +96,39 @@ describe("deserialize", function() {
     expect(result.lastIndex).to.equal(1);
   })
 
+  it("deserializes Set and retains order", function() {
+    let result = deserialize({
+      $n: ".Set",
+      values: [1, 3, 2, {}],
+    });
+    expect(result).to.be.instanceof(Set);
+
+    let values = [];
+    result.forEach(value => {
+      values.push(value);
+    });
+
+    expect(values).to.deep.equal([1, 3, 2, {}]);
+  })
+
+  it("deserializes Map and retains order", function() {
+    let result = deserialize({
+      $n: ".Map",
+      values: [1, "a", 3, "c", 2, "b", {}, []],
+    });
+    expect(result).to.be.instanceof(Map);
+
+    let keys = [];
+    let values = [];
+    result.forEach((value, key) => {
+      keys.push(key);
+      values.push(value);
+    });
+
+    expect(keys).to.deep.equal([1, 3, 2, {}]);
+    expect(values).to.deep.equal(["a", "c", "b", []]);
+  })
+
   it("deserializes object of registered class", function() {
     class A {
       constructor() {

@@ -95,6 +95,34 @@ describe("serialize", function() {
     });
   })
 
+  it("serializes Array", function() {
+    expect(serialize([1, 2, 3])).to.deep.equal([1, 2, 3]);
+  })
+
+  it("serializes Set and retains order", function() {
+    let set = new Set();
+    set.add(1);
+    set.add(3);
+    set.add(2);
+    set.add({});
+    expect(serialize(set)).to.deep.equal({
+      $n: ".Set",
+      values: [1, 3, 2, {}],
+    });
+  })
+
+  it("serializes Map and retains order", function() {
+    let set = new Map();
+    set.set(1, "a");
+    set.set(3, "c");
+    set.set(2, "b");
+    set.set({}, []);
+    expect(serialize(set)).to.deep.equal({
+      $n: ".Map",
+      values: [1, "a", 3, "c", 2, "b", {}, []],
+    });
+  })
+
   it("cannot serialize instances of unregistered classes", function() {
     class A {
       constructor() {
