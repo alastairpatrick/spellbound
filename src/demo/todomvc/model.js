@@ -6,24 +6,10 @@ import { serialize, deserialize, Namespace } from '../../spellbound-util';
 const namespace = new Namespace();
 
 class Todo {
-  constructor(arg) {
-    if (typeof arg === "object") {
-      this.id = observable(arg.id);
-      this.title = observable(arg.title);
-      this.completed = observable(arg.completed);
-    } else {
-      this.id = observable(uuid());
-      this.title = observable(arg || "");
-      this.completed = observable(false);
-    }
-  }
-
-  toJSON() {
-    return {
-      id: this.id.$,
-      title: this.title.$,
-      completed: this.completed.$,
-    };
+  constructor(title) {
+    this.id = observable(uuid());
+    this.title = observable(title || "");
+    this.completed = observable(false);
   }
 }
 
@@ -31,7 +17,9 @@ class TodoList {
   constructor(key) {
     this.key = key;
     this.all = observable([]);
-
+    this.onStorage = this.onStorage.bind(this);
+    this.storer = null;
+    
     this.completed = computed(() => {
       return this.all.$.filter((todo) => todo.completed.$);
     });
@@ -40,22 +28,12 @@ class TodoList {
       return this.all.$.filter((todo) => !todo.completed.$);
     });
 
-    this.storer = null;
     if (key) {
       this.load();
-
-      this.storageListener = (event) => {
-        if (event.storageArea !== localStorage)
-          return;
-        if (event.key !== key)
-          return;
-        this.load();
-      }
-
       this.storer = autorun(() => {
-        removeEventListener("storage", this.storageListener);
+        removeEventListener("storage", this.onStorage);
         this.save();
-        addEventListener("storage", this.storageListener);
+        addEventListener("storage", this.onStorage);
       });
     }
   }
@@ -66,10 +44,7 @@ class TodoList {
       this.storer = null;
     }
 
-    if (this.listener) {
-      removeEventListener("storage", this.storageListener);
-      this.listener = null;
-    }
+    removeEventListener("storage", this.onStorage);
   }
 
   save() {
@@ -94,6 +69,14 @@ class TodoList {
     }
   }
 
+  onStorage(event) {
+    if (event.storageArea !== localStorage)
+      return;
+    if (event.key !== key)
+      return;
+    this.load();
+  }
+  
   add(item) {
     mutate((all) => {
       all.$.push(item);
