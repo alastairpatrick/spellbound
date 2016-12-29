@@ -28,16 +28,25 @@ class External {
     for (let property in object) {
       let propValue = object[property];
       if (filter(propValue, property, object))
-        result[property] = output(propValue);
+        result[property.replace(RE_MUST_ESCAPE, "$$$$")] = output(propValue);
     }
     return result;
   }
 
   deserializeObject(target, serialized, output) {
+    let result = {};
     for (let property in serialized) {
-      if (has.call(serialized, property))
-        output(property, serialized[property]);
+      if (!has.call(serialized, property))
+        continue;
+
+      if (RE_PRAGMA.test(property))
+        continue;
+
+      let targetProperty = property.replace(RE_ESCAPED, "$$");
+      result[targetProperty] = output(serialized[property]);
     }
+
+    return result;
   }
 }
 
@@ -74,10 +83,14 @@ class MapExternal extends External {
     return { values };
   }
 
-  deserializeObject(target, serialized) {
+  deserializeObject(target, serialized, output) {
     let values = serialized.values;
-    for (let i = 0; i < values.length; i += 2)
-      target.set(values[i], values[i + 1]);
+    for (let i = 0; i < values.length; i += 2) {
+      let key = output(values[i]);
+      let value = output(values[i + 1]);
+      if (target)
+        target.set(key, value);
+    }
   }
 }
 
@@ -91,6 +104,8 @@ class RegExpExternal extends External {
     if (has.call(serialized, "flags"))
       flags = serialized.flags;
     let result = new RegExp(serialized.source, flags);
+    if (has.call(serialized, "lastIndex"))
+      result.lastIndex = serialized.lastIndex;
     return result;
   }
 
@@ -107,9 +122,8 @@ class RegExpExternal extends External {
     return result;
   }
 
-  deserializeObject(target, serialized) {
-    if (has.call(serialized, "lastIndex"))
-      target.lastIndex = serialized.lastIndex;
+  deserializeObject() {
+    // Do nothing: RegExp initialized by newObject.
   }
 }
 
@@ -126,10 +140,13 @@ class SetExternal extends External {
     return { values };
   }
 
-  deserializeObject(target, serialized) {
-    serialized.values.forEach(value => {
-      target.add(value);
-    });
+  deserializeObject(target, serialized, output) {
+    let values = serialized.values;
+    for (let i = 0; i < values.length; ++i) {
+      let value = output(values[i]);
+      if (target)
+        target.add(value);
+    }
   }
 }
 
@@ -226,13 +243,14 @@ class Namespace {
     return externalsByName[name];
   }
 
-  serializeObject(serialized, object, output, options) {
+  serializeObject(object, output, options) {
     let prototype = getPrototypeOf(object);
     let constructor = prototype.constructor;
     let nameExternal = this.externalsByValue.$.get(constructor);
     if (nameExternal !== undefined) {
-      serialized.$n = nameExternal.name;
-      return nameExternal.external.serializeObject(object, output, options);
+      let result = nameExternal.external.serializeObject(object, output, options);
+      result.$n = nameExternal.name;
+      return result;
     }
     
     if (prototype === objectPrototype) {
@@ -333,7 +351,7 @@ const serializeJS = (v, opts = {}) => {
       u.forEach(gray);
     } else {
       entry.serialized = {};
-      namespace.serializeObject({}, u, gray, options);
+      namespace.serializeObject(u, gray, options);
     }
   });
   
@@ -349,12 +367,7 @@ const serializeJS = (v, opts = {}) => {
         serialized.push(output(el));
       });
     } else {
-      let ser = namespace.serializeObject(serialized, u, output, options);
-      for (let property in ser) {
-        if (!has.call(ser, property))
-          continue;
-        serialized[property.replace(RE_MUST_ESCAPE, "$$$$")] = ser[property];
-      }
+      Object.assign(serialized, namespace.serializeObject(u, output, options));
     }
   });
 
@@ -444,15 +457,7 @@ const deserializeJS = (serialized, opts) => {
         }
       }
 
-      for (let property in serialized) {
-        if (!has.call(serialized, property))
-          continue;
-
-        if (RE_PRAGMA.test(property))
-          continue;
-
-        gray(serialized[property]);
-      }
+      entry.external.deserializeObject(null, serialized, gray, options);
     }
   });
 
@@ -466,21 +471,21 @@ const deserializeJS = (serialized, opts) => {
         target[i] = output(el);
       });
     } else {
-      entry.external.deserializeObject(target, serialized, (property, propValue) => {
-        if (RE_PRAGMA.test(property))
-          return;
+      let result = entry.external.deserializeObject(target, serialized, output, options);
+      for (let property in result) {
+        if (!has.call(result, property))
+          continue;
 
-        let targetProperty = property.replace(RE_ESCAPED, "$$");
-        let oldValue = target[targetProperty];
-        if (!filter(oldValue, targetProperty, target))
-          return;
+        let oldValue = target[property];
+        if (!filter(oldValue, property, target))
+          continue;
 
         if (isObservable(oldValue)) {
-          oldValue.$ = output(propValue);
+          oldValue.$ = result[property];
         } else {
-          target[targetProperty] = output(propValue);
-        }
-      }, options);
+          target[property] = result[property];
+        }        
+      }
     }
   });
 

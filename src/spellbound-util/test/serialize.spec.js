@@ -116,10 +116,10 @@ describe("serialize", function() {
     set.set(1, "a");
     set.set(3, "c");
     set.set(2, "b");
-    set.set({}, []);
+    set.set({}, undefined);
     expect(serialize(set)).to.deep.equal({
       $n: ".Map",
-      values: [1, "a", 3, "c", 2, "b", {}, []],
+      values: [1, "a", 3, "c", 2, "b", {}, { $r: ".undefined" }],
     });
   })
 

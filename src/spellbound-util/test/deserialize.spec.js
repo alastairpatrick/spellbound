@@ -114,7 +114,7 @@ describe("deserialize", function() {
   it("deserializes Map and retains order", function() {
     let result = deserialize({
       $n: ".Map",
-      values: [1, "a", 3, "c", 2, "b", {}, []],
+      values: [1, "a", 3, "c", 2, "b", {}, { $r: ".undefined" }],
     });
     expect(result).to.be.instanceof(Map);
 
@@ -126,7 +126,7 @@ describe("deserialize", function() {
     });
 
     expect(keys).to.deep.equal([1, 3, 2, {}]);
-    expect(values).to.deep.equal(["a", "c", "b", []]);
+    expect(values).to.deep.equal(["a", "c", "b", undefined]);
   })
 
   it("deserializes object of registered class", function() {
