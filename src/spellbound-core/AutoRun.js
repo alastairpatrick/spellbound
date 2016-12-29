@@ -6,6 +6,7 @@ const noop = () => undefined;
 class AutoRun {
   constructor() {
     this._disposeGuard = noop;
+    this.count = 0;
   }
 
   dispose() {
@@ -23,6 +24,7 @@ class AutoRun {
     try {
       dispose = guard(() => {
         action(this);
+        ++this.count;
       }, () => {
         this.run(action);
       }, {

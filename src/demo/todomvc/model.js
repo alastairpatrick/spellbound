@@ -30,9 +30,9 @@ class TodoList {
 
     if (key) {
       this.load();
-      this.storer = autorun(() => {
+      this.storer = autorun((autorun) => {
         removeEventListener("storage", this.onStorage);
-        this.save();
+        this.save(autorun.count > 0);
         addEventListener("storage", this.onStorage);
       });
     }
@@ -47,12 +47,14 @@ class TodoList {
     removeEventListener("storage", this.onStorage);
   }
 
-  save() {
-    localStorage.setItem(this.key, serialize(this, {
+  save(toStorage) {
+    let json = serialize(this, {
       filter: isWritableObservable,
       namespace,
       format: "json",
-    }));
+    })
+    if (toStorage)
+      localStorage.setItem(this.key, json);
   }
 
   load() {
@@ -72,7 +74,7 @@ class TodoList {
   onStorage(event) {
     if (event.storageArea !== localStorage)
       return;
-    if (event.key !== key)
+    if (event.key !== this.key)
       return;
     this.load();
   }

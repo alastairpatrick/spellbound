@@ -65,4 +65,21 @@ describe("Reaction", function() {
       done();
     });
   })
+
+  it("action can access run count", function(done) {
+    autorun.run((autorun) => {
+      let ignored = observable.$;
+      action(autorun.count);
+    });
+    sinon.assert.calledOnce(action);
+    sinon.assert.calledWith(action, 0);
+
+    observable.$ = 2;
+
+    setImmediate(function() {
+      sinon.assert.calledTwice(action);
+      sinon.assert.calledWith(action, 1);
+      done();
+    });
+  })
 })
