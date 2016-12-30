@@ -1,7 +1,7 @@
 import { autorun, computed, isWritableObservable, mutate, observable } from '../../spellbound-core';
 import { uuid } from './util';
 
-import { serialize, deserialize, Namespace } from '../../spellbound-util';
+import { serialize, deserialize, Namespace } from '../../spellbound-serialize';
 
 const namespace = new Namespace();
 
