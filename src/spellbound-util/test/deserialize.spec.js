@@ -108,6 +108,25 @@ describe("deserialize", function() {
     expect(result.lastIndex).to.equal(1);
   })
 
+  it("deserializes Errors", function() {
+    let test = (name, cl) => {
+      let result = deserialize({
+        $n: name,
+        message: "Message",
+      });
+      expect(result).to.be.instanceof(cl);
+      expect(result.message).to.equal("Message");
+    }
+
+    test(".Error", Error);
+    test(".EvalError", EvalError);
+    test(".RangeError", RangeError);
+    test(".ReferenceError", ReferenceError);
+    test(".SyntaxError", SyntaxError);
+    test(".TypeError", TypeError);
+    test(".URIError", URIError);
+  })
+
   it("deserializes dense Array", function() {
     expect(deserialize([1, 2, 3])).to.deep.equal([1, 2, 3]);
   })
@@ -360,7 +379,14 @@ describe("deserialize", function() {
     expect(result).to.be.instanceof(A);
     expect(result.b.$).to.equal(7);
   })
-  
+ 
+  it("filter does not apply to (underived) Object properties", function() {
+    let result = deserialize({ b: 1 }, {
+      filter: isWritableObservable,
+    });
+    expect(result.b).to.equal(1);
+  })
+ 
   it("deserializes Object of Objects", function() {
     expect(deserialize({ a: { b: 1 } })).to.deep.equal({ a: { b: 1 } });
   })

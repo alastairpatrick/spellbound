@@ -103,6 +103,37 @@ describe("serialize", function() {
     });
   })
 
+  it("serializes Errors", function() {
+    expect(serialize(new Error("Message"))).to.deep.equal({
+      $n: ".Error",
+      message: "Message",
+    });
+    expect(serialize(new EvalError("Message"))).to.deep.equal({
+      $n: ".EvalError",
+      message: "Message",
+    });
+    expect(serialize(new RangeError("Message"))).to.deep.equal({
+      $n: ".RangeError",
+      message: "Message",
+    });
+    expect(serialize(new ReferenceError("Message"))).to.deep.equal({
+      $n: ".ReferenceError",
+      message: "Message",
+    });
+    expect(serialize(new SyntaxError("Message"))).to.deep.equal({
+      $n: ".SyntaxError",
+      message: "Message",
+    });
+    expect(serialize(new TypeError("Message"))).to.deep.equal({
+      $n: ".TypeError",
+      message: "Message",
+    });
+    expect(serialize(new URIError("Message"))).to.deep.equal({
+      $n: ".URIError",
+      message: "Message",
+    });
+  })
+
   it("serializes dense Array", function() {
     expect(serialize([1, 2, 3])).to.deep.equal([1, 2, 3]);
   })
@@ -153,39 +184,6 @@ describe("serialize", function() {
     expect(serialize(set)).to.deep.equal({
       $n: ".Map",
       values: [1, "a", 3, "c", 2, "b", {}, { $r: ".undefined" }],
-    });
-  })
-
-  it("serializes ArrayBuffer", function() {
-    let view = new Uint8Array(4);
-    view[0] = 65;
-    view[1] = 66;
-    view[2] = 67;
-    view[3] = 68;
-
-    expect(serialize(view.buffer)).to.deep.equal({
-      $n: ".ArrayBuffer",
-      data: "ABCD",
-      byteLength: 4,
-    });
-  })
-
-  it("serializes Uint8Array", function() {
-    let view = new Uint8Array(4);
-    view[0] = 65;
-    view[1] = 66;
-    view[2] = 67;
-    view[3] = 68;
-
-    expect(serialize(view)).to.deep.equal({
-      $n: ".Uint8Array",
-      byteOffset: 0,
-      length: 4,
-      buffer: {
-        $n: ".ArrayBuffer",
-        data: "ABCD",
-        byteLength: 4,
-      }
     });
   })
 
@@ -399,7 +397,23 @@ describe("serialize", function() {
       serialize: true,
       filter: isWritableObservable,
     });
-    expect(result).to.deep.equal({ observable: 2 });
+    expect(result).to.deep.equal({ number: 1, observable: 2 });
+  })
+  
+  it("serializes all (underived) Object properties even when filter in use", function() {
+    class A {
+      constructor() {
+        this.number = 1;
+        this.observable = new Observable(2);
+      }
+    }
+    let a = new A();
+    let result = serialize(a, {
+      serialize: true,
+      filter: isWritableObservable,
+      namespace: new Namespace({A}),
+    });
+    expect(result).to.deep.equal({ $n: "A", observable: 2 });
   })
 
   it("transforms number", function() {
@@ -453,5 +467,164 @@ describe("serialize", function() {
         format: "foo"
       });
     }).to.throw(/Unknown format 'foo'/);
+  })
+})
+
+describe("serialize ArrayBuffer", function() {
+  let buffer;
+
+  beforeEach(function() {
+    buffer = new ArrayBuffer(8);
+    let view = new Uint8Array(buffer, 0, 8);
+    for (let i = 0; i < view.length; ++i)
+      view[i] = i + 65;
+  })
+
+  it("serializes ArrayBuffer", function() {
+    expect(serialize(buffer)).to.deep.equal({
+      $n: ".ArrayBuffer",
+      data: "ABCDEFGH",
+      byteLength: 8,
+    });
+  })
+
+  it("serializes Uint8Array", function() {
+    let view = new Uint8Array(buffer, 0, 8);
+    expect(serialize(view)).to.deep.equal({
+      $n: ".Uint8Array",
+      byteOffset: 0,
+      length: 8,
+      buffer: {
+        $n: ".ArrayBuffer",
+        data: "ABCDEFGH",
+        byteLength: 8,
+      }
+    });
+  })
+
+  it("serializes Uint8ClampedArray", function() {
+    let view = new Uint8ClampedArray(buffer, 0, 8);
+    expect(serialize(view)).to.deep.equal({
+      $n: ".Uint8ClampedArray",
+      byteOffset: 0,
+      length: 8,
+      buffer: {
+        $n: ".ArrayBuffer",
+        data: "ABCDEFGH",
+        byteLength: 8,
+      }
+    });
+  })
+
+  it("serializes Int8Array", function() {
+    let view = new Int8Array(buffer, 0, 8);
+    expect(serialize(view)).to.deep.equal({
+      $n: ".Int8Array",
+      byteOffset: 0,
+      length: 8,
+      buffer: {
+        $n: ".ArrayBuffer",
+        data: "ABCDEFGH",
+        byteLength: 8,
+      }
+    });
+  })
+
+  it("serializes Uint16Array", function() {
+    let view = new Uint16Array(buffer, 0, 4);
+    expect(serialize(view)).to.deep.equal({
+      $n: ".Uint16Array",
+      byteOffset: 0,
+      length: 4,
+      buffer: {
+        $n: ".ArrayBuffer",
+        data: "ABCDEFGH",
+        byteLength: 8,
+      }
+    });
+  })
+
+  it("serializes Int16Array", function() {
+    let view = new Int16Array(buffer, 0, 4);
+    expect(serialize(view)).to.deep.equal({
+      $n: ".Int16Array",
+      byteOffset: 0,
+      length: 4,
+      buffer: {
+        $n: ".ArrayBuffer",
+        data: "ABCDEFGH",
+        byteLength: 8,
+      }
+    });
+  })
+
+  it("serializes Uint32Array", function() {
+    let view = new Uint32Array(buffer, 0, 2);
+    expect(serialize(view)).to.deep.equal({
+      $n: ".Uint32Array",
+      byteOffset: 0,
+      length: 2,
+      buffer: {
+        $n: ".ArrayBuffer",
+        data: "ABCDEFGH",
+        byteLength: 8,
+      }
+    });
+  })
+
+  it("serializes Int32Array", function() {
+    let view = new Int32Array(buffer, 0, 2);
+    expect(serialize(view)).to.deep.equal({
+      $n: ".Int32Array",
+      byteOffset: 0,
+      length: 2,
+      buffer: {
+        $n: ".ArrayBuffer",
+        data: "ABCDEFGH",
+        byteLength: 8,
+      }
+    });
+  })
+
+  it("serializes Float32Array", function() {
+    let view = new Float32Array(buffer, 0, 2);
+    expect(serialize(view)).to.deep.equal({
+      $n: ".Float32Array",
+      byteOffset: 0,
+      length: 2,
+      buffer: {
+        $n: ".ArrayBuffer",
+        data: "ABCDEFGH",
+        byteLength: 8,
+      }
+    });
+  })
+
+  it("serializes Float64Array", function() {
+    let view = new Float64Array(buffer, 0, 1);
+    expect(serialize(view)).to.deep.equal({
+      $n: ".Float64Array",
+      byteOffset: 0,
+      length: 1,
+      buffer: {
+        $n: ".ArrayBuffer",
+        data: "ABCDEFGH",
+        byteLength: 8,
+      }
+    });
+  })
+
+  it("serializes DataView", function() {
+    let view = new DataView(buffer, 0, 8);
+    expect(serialize(view)).to.deep.equal({
+      $n: ".DataView",
+      byteOffset: 0,
+      byteLength: 8,
+      buffer: {
+        $n: ".ArrayBuffer",
+        data: "ABCDEFGH",
+        byteLength: 8,
+      }
+    });
   })
 })

@@ -43,8 +43,8 @@ class External {
     return result;
   }
 
-  deserializeObject(target, serialized, output) {
-    let result = {};
+  deserializeObject(target, serialized, output, options) {
+    let filter = options.filter;
     for (let property in serialized) {
       if (!has.call(serialized, property))
         continue;
@@ -52,11 +52,21 @@ class External {
       if (RE_PRAGMA.test(property))
         continue;
 
-      let targetProperty = property.replace(RE_ESCAPED, "$$");
-      result[targetProperty] = output(serialized[property]);
-    }
+      let propValue = output(serialized[property]);
 
-    return result;
+      if (target) {
+        let targetProperty = property.replace(RE_ESCAPED, "$$");
+        if (!filter(target[targetProperty], targetProperty, target))
+          continue;
+
+        let oldValue = target[targetProperty];
+        if (isObservable(oldValue)) {
+          oldValue.$ = propValue;
+        } else {
+          target[targetProperty] = propValue;
+        }        
+      }
+    }
   }
 }
 
@@ -89,6 +99,31 @@ class ArrayBufferExternal extends External {
   }
 }
 
+class DataViewExternal extends External {
+  constructor() {
+    super(DataView);
+  }
+
+  newObject(serialized, output) {
+    let buffer = output(serialized.buffer);
+    if (buffer === GRAY)
+      return GRAY;
+    return new DataView(buffer, serialized.byteOffset, serialized.byteLength);
+  }
+
+  serializeObject(object, output) {
+    return {
+      buffer: output(object.buffer),
+      byteOffset: object.byteOffset,
+      byteLength: object.byteLength,
+    };
+  }
+
+  deserializeObject() {
+    // Do nothing: initialized by newObject.
+  }
+}
+
 class DateExternal extends External {
   constructor() {
     super(Date);
@@ -105,7 +140,21 @@ class DateExternal extends External {
   }
 
   deserializeObject() {
-    // Do nothing: Date initialized by newObject.
+    // Do nothing: initialized by newObject.
+  }
+}
+
+class ErrorExternal extends External {
+  serializeObject(object, output) {
+    return {
+      message: output(object.message),
+    }
+  }
+
+  deserializeObject(target, serialized, output) {
+    let message = output(serialized.message);
+    if (target)
+      target.message = message;
   }
 }
 
@@ -130,6 +179,20 @@ class MapExternal extends External {
       if (target)
         target.set(key, value);
     }
+  }
+}
+
+const NO_FILTER_OPTIONS = {
+  filter: () => true,
+}
+
+class ObjectExternal extends External {
+  serializeObject(object, output) {
+    return super.serializeObject(object, output, NO_FILTER_OPTIONS);
+  }
+
+  deserializeObject(target, serialized, output) {
+    return super.deserializeObject(target, serialized, output, NO_FILTER_OPTIONS)
   }
 }
 
@@ -257,7 +320,7 @@ class TypedArrayExternal extends External {
   }
 }
 
-const OBJECT_EXTERNAL = new External();
+const OBJECT_EXTERNAL = new ObjectExternal(Object);
 
 const DEFAULT_EXTERNALS = {
   ".undefined": new External(undefined),
@@ -266,13 +329,30 @@ const DEFAULT_EXTERNALS = {
   "-Infinity": new External(-Infinity),
   ".ArrayBuffer": new ArrayBufferExternal(),
   ".Boolean": new PrimitiveExternal(Boolean),
+  ".DataView": new DataViewExternal(),
   ".Date": new DateExternal(),
+  ".Error": new ErrorExternal(Error),
+  ".EvalError": new ErrorExternal(EvalError),
+  ".Float32Array": new TypedArrayExternal(Float32Array),
+  ".Float64Array": new TypedArrayExternal(Float64Array),
+  ".Int8Array": new TypedArrayExternal(Int8Array),
+  ".Int16Array": new TypedArrayExternal(Int16Array),
+  ".Int32Array": new TypedArrayExternal(Int32Array),
   ".Map": new MapExternal(),
   ".Number": new PrimitiveExternal(Number),
+  ".Object": OBJECT_EXTERNAL,
+  ".RangeError": new ErrorExternal(RangeError),
+  ".ReferenceError": new ErrorExternal(ReferenceError),
   ".RegExp": new RegExpExternal(),
   ".Set": new SetExternal(),
   ".SparseArray": new SparseArrayExternal(),
+  ".SyntaxError": new ErrorExternal(SyntaxError),
+  ".TypeError": new ErrorExternal(TypeError),
+  ".URIError": new ErrorExternal(URIError),
   ".Uint8Array": new TypedArrayExternal(Uint8Array),
+  ".Uint8ClampedArray": new TypedArrayExternal(Uint8ClampedArray),
+  ".Uint16Array": new TypedArrayExternal(Uint16Array),
+  ".Uint32Array": new TypedArrayExternal(Uint32Array),
 }
 
 class Namespace {
@@ -360,8 +440,10 @@ class Namespace {
     let constructor = prototype.constructor;
     let nameExternal = this.externalsByValue.$.get(constructor);
     if (nameExternal !== undefined) {
-      let result = nameExternal.external.serializeObject(object, output, options);
-      result.$n = nameExternal.name;
+      let external = nameExternal.external;
+      let result = external.serializeObject(object, output, options);
+      if (external !== OBJECT_EXTERNAL)
+        result.$n = nameExternal.name;
       return result;
     }
     
@@ -510,7 +592,6 @@ const deserializeJS = (serialized, opts) => {
     transform: identity,
   }, opts);
 
-  let filter = options.filter;
   let namespace = options.namespace;
   let transform = options.transform;
 
@@ -625,21 +706,7 @@ const deserializeJS = (serialized, opts) => {
         target[i] = output(el);
       });
     } else {
-      let result = entry.external.deserializeObject(target, serialized, output, options);
-      for (let property in result) {
-        if (!has.call(result, property))
-          continue;
-
-        let oldValue = target[property];
-        if (!filter(oldValue, property, target))
-          continue;
-
-        if (isObservable(oldValue)) {
-          oldValue.$ = result[property];
-        } else {
-          target[property] = result[property];
-        }        
-      }
+      entry.external.deserializeObject(target, serialized, output, options);
     }
   });
 
