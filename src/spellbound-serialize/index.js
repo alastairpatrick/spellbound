@@ -1,4 +1,6 @@
-import { Namespace, deserialize, serialize } from './serialize';
+import { Namespace } from './Namespace';
+import { deserialize } from './deserialize';
+import { serialize } from './serialize';
 
 export {
   Namespace,
