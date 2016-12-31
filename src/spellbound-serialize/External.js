@@ -17,6 +17,12 @@ class External {
     return new (this.value)();
   }
 
+  newSerialized(object, name) {
+    return {
+      $n: name,
+    };
+  }
+
   serializeObject(object, output, options) {
     let result = {};
     let filter = options.filter;
@@ -167,11 +173,33 @@ class MapExternal extends External {
   }
 }
 
+class NoopExternal extends External {
+  newObject(serialized) {
+    return serialized;
+  }
+
+  newSerialized(object) {
+    return object;
+  }
+
+  serializeObject() {
+    // Do nothing.
+  }
+
+  deserializeObject() {
+    // Do nothing.
+  }
+}
+
 const NO_FILTER_OPTIONS = {
   filter: () => true,
 }
 
 class ObjectExternal extends External {
+  newSerialized() {
+    return {};
+  }
+
   serializeObject(object, output) {
     return super.serializeObject(object, output, NO_FILTER_OPTIONS);
   }
@@ -307,7 +335,7 @@ class TypedArrayExternal extends External {
 
 const OBJECT_EXTERNAL = new ObjectExternal(Object);
 
-const DEFAULT_EXTERNALS = {
+const JSON_DEFAULTS = {
   ".undefined": new External(undefined),
   ".NaN": new External(NaN),
   "+Infinity": new External(Infinity),
@@ -340,9 +368,39 @@ const DEFAULT_EXTERNALS = {
   ".Uint32Array": new TypedArrayExternal(Uint32Array),
 }
 
+const STRUCTURED_CLONE_DEFAULTS = {
+  ".ArrayBuffer": new NoopExternal(ArrayBuffer),
+  ".Boolean": new NoopExternal(Boolean),
+  ".DataView": new NoopExternal(DataView),
+  ".Date": new NoopExternal(Date),
+  ".Error": new ErrorExternal(Error),
+  ".EvalError": new ErrorExternal(EvalError),
+  ".Float32Array": new NoopExternal(Float32Array),
+  ".Float64Array": new NoopExternal(Float64Array),
+  ".Int8Array": new NoopExternal(Int8Array),
+  ".Int16Array": new NoopExternal(Int16Array),
+  ".Int32Array": new NoopExternal(Int32Array),
+  ".Map": new MapExternal(),
+  ".Number": new NoopExternal(Number),
+  ".Object": OBJECT_EXTERNAL,
+  ".RangeError": new ErrorExternal(RangeError),
+  ".ReferenceError": new ErrorExternal(ReferenceError),
+  ".RegExp": new RegExpExternal(),
+  ".Set": new SetExternal(),
+  ".SparseArray": new SparseArrayExternal(),
+  ".SyntaxError": new ErrorExternal(SyntaxError),
+  ".TypeError": new ErrorExternal(TypeError),
+  ".URIError": new ErrorExternal(URIError),
+  ".Uint8Array": new NoopExternal(Uint8Array),
+  ".Uint8ClampedArray": new NoopExternal(Uint8ClampedArray),
+  ".Uint16Array": new NoopExternal(Uint16Array),
+  ".Uint32Array": new NoopExternal(Uint32Array),
+}
+
 export {
   External,
-  DEFAULT_EXTERNALS,
+  JSON_DEFAULTS,
+  STRUCTURED_CLONE_DEFAULTS,
   GRAY,
   OBJECT_EXTERNAL,
 }

@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 
 import { Observable, isWritableObservable } from '../../spellbound-core';
-import { serialize, Namespace } from '..';
+import { serialize, Namespace, STRUCTURED_CLONE_DEFAULTS } from '..';
 
 
 describe("serialize", function() {
@@ -11,6 +11,12 @@ describe("serialize", function() {
 
   it("serializes Number object", function() {
     expect(serialize(new Number(7))).to.deep.equal({ $n: ".Number", value: 7 });
+  })
+
+  it("serializes Number object to itself for structured cloning", function() {
+    let object = new Number(7);
+    let namespace = new Namespace({}, STRUCTURED_CLONE_DEFAULTS);
+    expect(serialize(object, { namespace })).to.equal(object);
   })
 
   it("serializes string to itself", function() {
@@ -29,6 +35,12 @@ describe("serialize", function() {
     expect(serialize(new Boolean(true))).to.deep.equal({ $n: ".Boolean", value: true });
   })
 
+  it("serializes Boolean object to itself for structured cloning", function() {
+    let object = new Boolean(true);
+    let namespace = new Namespace({}, STRUCTURED_CLONE_DEFAULTS);
+    expect(serialize(object, { namespace })).to.equal(object);
+  })
+
   it("serializes null to itself", function() {
     expect(serialize(null)).to.equal(null);
   })
@@ -37,19 +49,39 @@ describe("serialize", function() {
     expect(serialize(undefined)).to.deep.equal({ $r: ".undefined" });
   })
 
+  it("serializes undefined to itself for structured cloning", function() {
+    let namespace = new Namespace({}, STRUCTURED_CLONE_DEFAULTS);
+    expect(serialize(undefined, { namespace })).to.equal(undefined);
+  })
+
   it("serializes NaN as reference", function() {
     expect(serialize(NaN)).to.deep.equal({ $r: ".NaN" });
+  })
+
+  it("serializes NaN to itself for structured cloning", function() {
+    let namespace = new Namespace({}, STRUCTURED_CLONE_DEFAULTS);
+    expect(serialize(NaN, { namespace })).to.be.NaN;
   })
 
   it("serializes Infinity as reference", function() {
     expect(serialize(Infinity)).to.deep.equal({ $r: "+Infinity" });
   })
 
+  it("serializes Infinity to itself for structured cloning", function() {
+    let namespace = new Namespace({}, STRUCTURED_CLONE_DEFAULTS);
+    expect(serialize(Infinity, { namespace })).to.equal(Infinity);
+  })
+
   it("serializes -Infinity as reference", function() {
     expect(serialize(-Infinity)).to.deep.equal({ $r: "-Infinity" });
   })
 
-  it("serializes function", function() {
+  it("serializes -Infinity to itself for structured cloning", function() {
+    let namespace = new Namespace({}, STRUCTURED_CLONE_DEFAULTS);
+    expect(serialize(-Infinity, { namespace })).to.equal(-Infinity);
+  })
+
+  it("serializes function to itself", function() {
     let fn = () => undefined;
     expect(serialize(fn)).to.equal(fn);
   })
@@ -75,6 +107,12 @@ describe("serialize", function() {
       $n: ".Date",
       iso: "1995-12-25T13:30:00.000Z",
     });
+  })
+
+  it("serializes Date as itself for structured cloning", function() {
+    let object = new Date("Mon, 25 Dec 1995 13:30:00 GMT")
+    let namespace = new Namespace({}, STRUCTURED_CLONE_DEFAULTS);
+    expect(serialize(object, { namespace })).to.equal(object);
   })
 
   it("serializes RegExp", function() {
@@ -626,5 +664,12 @@ describe("serialize ArrayBuffer", function() {
         byteLength: 8,
       }
     });
+  })
+
+  it("does not serialize ArrayBuffer for structured cloning", function() {
+    let namespace = new Namespace({}, STRUCTURED_CLONE_DEFAULTS);
+    let result = serialize(buffer, { namespace });
+    expect(result).to.be.instanceof(ArrayBuffer);
+    expect(result).to.equal(buffer);
   })
 })

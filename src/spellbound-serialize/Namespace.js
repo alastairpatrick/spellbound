@@ -1,5 +1,10 @@
 import { computed, mutate, observable } from '../spellbound-core';
-import { DEFAULT_EXTERNALS, OBJECT_EXTERNAL, External } from './External';
+import { JSON_DEFAULTS, OBJECT_EXTERNAL, External } from './External';
+
+const OBJECT_NAME_EXTERNAL = {
+  name: "",
+  external: OBJECT_EXTERNAL,
+}
 
 const RE_VALID_NAME = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
 
@@ -8,11 +13,11 @@ const has = Object.prototype.hasOwnProperty;
 const objectPrototype = Object.prototype;
 
 class Namespace {
-  constructor(locals) {
+  constructor(locals, defaults = JSON_DEFAULTS) {
     this.localsByName = observable({});
 
     this.externalsByName = computed(() => {
-      let result = Object.assign({}, DEFAULT_EXTERNALS);
+      let result = Object.assign({}, defaults);
 
       let map = new Map();
       map.set(this.localsByName.$, "");
@@ -87,25 +92,19 @@ class Namespace {
     return externalsByName[name];
   }
 
-  serializeObject(object, output, options) {
+  getConstructorExternal(object) {
     let prototype = getPrototypeOf(object);
     let constructor = prototype.constructor;
     let nameExternal = this.externalsByValue.$.get(constructor);
-    if (nameExternal !== undefined) {
-      let external = nameExternal.external;
-      let result = external.serializeObject(object, output, options);
-      if (external !== OBJECT_EXTERNAL)
-        result.$n = nameExternal.name;
-      return result;
-    }
-    
-    if (prototype === objectPrototype) {
-      return OBJECT_EXTERNAL.serializeObject(object, output, options);
-    }
+    if (nameExternal !== undefined)
+      return nameExternal;
 
+    if (prototype === objectPrototype)
+      return OBJECT_NAME_EXTERNAL;
+      
     throw new Error(`Cannot serialize unregistered constuctor ${constructor.name}`);
   }
-
+  
   getExternalReference(value) {
     let nameExternal = this.externalsByValue.$.get(value);
     if (nameExternal !== undefined)

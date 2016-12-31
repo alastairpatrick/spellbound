@@ -91,12 +91,14 @@ const serializeJS = (v, opts = {}) => {
         ++count;
       });
       if (count === u.length)
-        entry.serialized = [];  // for dense array
+        entry.serialized = [];
       else
-        entry.serialized = {};  // for sparse array
+        entry.serialized = { $n: ".SparseArray" };
     } else {
-      entry.serialized = {};
-      namespace.serializeObject(u, gray, options);
+      let nameExternal = namespace.getConstructorExternal(u);
+      let external = nameExternal.external;
+      entry.serialized = external.newSerialized(u, nameExternal.name);
+      external.serializeObject(u, gray, options);
     }
   });
   
@@ -112,7 +114,8 @@ const serializeJS = (v, opts = {}) => {
         serialized.push(output(el));
       });
     } else {
-      Object.assign(serialized, namespace.serializeObject(u, output, options));
+      let nameExternal = namespace.getConstructorExternal(u);
+      Object.assign(serialized, nameExternal.external.serializeObject(u, output, options));
     }
   });
 
