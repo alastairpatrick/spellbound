@@ -15,6 +15,12 @@ describe("deserialize", function() {
     expect(result.valueOf()).to.equal(7);
   })
 
+  it("pass through Number object", function() {
+    let object = new Number(7);
+    let result = deserialize(object);
+    expect(result).to.equal(object);
+  })
+
   it("deserializes string to itself", function() {
     expect(deserialize("hello")).to.equal("hello");
   })
@@ -31,6 +37,12 @@ describe("deserialize", function() {
     let result = deserialize({ $n: ".Boolean", value: true });
     expect(result).to.be.instanceof(Boolean);
     expect(result.valueOf()).to.equal(true);
+  })
+
+  it("pass through Boolean object", function() {
+    let object = new Boolean(true);
+    let result = deserialize(object);
+    expect(result).to.equal(object);
   })
 
   it("deserializes null to itself", function() {
@@ -53,7 +65,7 @@ describe("deserialize", function() {
     expect(deserialize({ $r: "-Infinity" })).to.equal(-Infinity);
   })
 
-  it("deserializes function", function() {
+  it("passes through function", function() {
     let fn = () => undefined;
     expect(deserialize(fn)).to.equal(fn);
   })
@@ -70,6 +82,12 @@ describe("deserialize", function() {
     })
     expect(result).to.be.instanceof(Date);
     expect(result.toISOString()).to.equal(dateStr);
+  })
+
+  it("passes through Date object", function() {
+    let object = new Date(0);
+    let result = deserialize(object);
+    expect(result).to.equal(object);
   })
 
   it("deserializes RegExp", function() {
@@ -106,6 +124,12 @@ describe("deserialize", function() {
     expect(result.source).to.equal("abc");
     expect(result.flags).to.equal("g");
     expect(result.lastIndex).to.equal(1);
+  })
+
+  it("passes through RegExp object", function() {
+    let object = /abc/;
+    let result = deserialize(object);
+    expect(result).to.equal(object);
   })
 
   it("deserializes Errors", function() {
@@ -193,6 +217,12 @@ describe("deserialize", function() {
     expect(view.reduce((prev, curr) => prev.concat(curr), [])).to.deep.equal([
       65, 66, 67, 68
     ])
+  })
+
+  it("passes through ArrayBuffer object", function() {
+    let object = new ArrayBuffer(4);
+    let result = deserialize(object);
+    expect(result).to.equal(object);
   })
 
   it("deserializes Uint8Array", function() {

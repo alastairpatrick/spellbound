@@ -2,8 +2,11 @@ import { GRAY, OBJECT_EXTERNAL } from './External';
 import { EMPTY_NAMESPACE } from './Namespace';
 import { defaultFilter } from './serialize';
 
+const getPrototypeOf = Object.getPrototypeOf;
 const has = Object.prototype.hasOwnProperty;
 const isArray = Array.isArray;
+const objectPrototype = Object.prototype;
+
 
 const identity = v => v;
 
@@ -85,7 +88,7 @@ const deserializeJS = (serialized, opts) => {
       if (entry.value === GRAY)
         entry.value = [];
       serialized.forEach(gray);
-    } else {
+    } else if (getPrototypeOf(serialized) === objectPrototype) {
       if (entry.value === GRAY) {
         if (has.call(serialized, "$n")) {
           entry.external = namespace.getExternalByName(serialized.$n);
@@ -97,6 +100,8 @@ const deserializeJS = (serialized, opts) => {
       }
 
       entry.external.deserializeObject(null, serialized, gray, options);
+    } else {
+      entry.value = serialized;
     }
   });
 
@@ -135,7 +140,7 @@ const deserializeJS = (serialized, opts) => {
       serialized.forEach((el, i) => {
         target[i] = output(el);
       });
-    } else {
+    } else if (getPrototypeOf(serialized) === objectPrototype) {
       entry.external.deserializeObject(target, serialized, output, options);
     }
   });
