@@ -36,11 +36,11 @@ class Reaction {
       throw new Error("Cannot dispose Reaction within read().");
     };
     try {
-      guardResult = guard(read, () => {
+      guardResult = guard(() => {
         this.evaluate(read, when, options);
       }, {
         capture: options.capture,
-      });
+      }).collect(read);
     } finally {
       this._disposeGuard = noop;
     }

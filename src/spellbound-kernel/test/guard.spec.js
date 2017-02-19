@@ -10,9 +10,9 @@ describe("Guard", function() {
 
   it("returns value when there are no dependencies", function() {
     let listener = sinon.spy();
-    let { value, hasDependencies } = guard(() => {
+    let { value, hasDependencies } = guard(listener, { sync: true }).collect(() => {
       return 1;
-    }, listener, { sync: true });
+    });
     
     expect(value).to.equal(1);
     expect(hasDependencies).to.equal(0);
@@ -20,11 +20,11 @@ describe("Guard", function() {
 
   it("returns value when there are no dependencies", function() {
     let listener = sinon.spy();
-    let { value, hasDependencies } = guard(() => {
+    let { value, hasDependencies } = guard(listener, { sync: true }).collect(() => {
       didObserve(objObserved1);
       didObserve(objObserved2);
       return 1;
-    }, listener, { sync: true });
+    });
 
     expect(value).to.equal(1);
     expect(hasDependencies).to.equal(2);
@@ -32,9 +32,9 @@ describe("Guard", function() {
 
   it("does not invoke listener if no change", function() {
     let listener = sinon.spy();
-    guard(() => {
+    guard(listener, { sync: true }).collect(() => {
       didObserve(objObserved1);
-    }, listener, { sync: true });
+    });
     willChange(objUnrelated);
 
     sinon.assert.notCalled(listener);
@@ -42,10 +42,10 @@ describe("Guard", function() {
 
   it("invokes listener after first observed changed", function() {
     let listener = sinon.spy();
-    guard(() => {
+    guard(listener, { sync: true }).collect(() => {
       didObserve(objObserved1);
       didObserve(objObserved2);
-    }, listener, { sync: true });
+    });
     willChange(objObserved1);
 
     sinon.assert.calledOnce(listener);
@@ -53,10 +53,22 @@ describe("Guard", function() {
 
   it("invokes listener after second observed changed", function() {
     let listener = sinon.spy();
-    guard(() => {
+    guard(listener, { sync: true }).collect(() => {
       didObserve(objObserved1);
       didObserve(objObserved2);
-    }, listener, { sync: true });
+    });
+    willChange(objObserved2);
+
+    sinon.assert.calledOnce(listener);
+  })
+
+  it("invokes listener after chained observed changed", function() {
+    let listener = sinon.spy();
+    guard(listener, { sync: true }).collect(() => {
+      didObserve(objObserved1);
+    }).collect(() => {
+      didObserve(objObserved2);
+    });
     willChange(objObserved2);
 
     sinon.assert.calledOnce(listener);
@@ -66,13 +78,13 @@ describe("Guard", function() {
     let listener1 = sinon.spy();
     let listener2 = sinon.spy();
 
-    guard(() => {
+    guard(listener1, { sync: true }).collect(() => {
       didObserve(objObserved1);
-    }, listener1, { sync: true });
+    });
 
-    guard(() => {
+    guard(listener2, { sync: true }).collect(() => {
       didObserve(objObserved1);
-    }, listener2, { sync: true });
+    });
 
     willChange(objObserved1);
 
@@ -82,9 +94,9 @@ describe("Guard", function() {
 
   it("does not invoke same listener more than once", function() {
     let listener = sinon.spy();
-    guard(() => {
+    guard(listener, { sync: true }).collect(() => {
       didObserve(objObserved1);
-    }, listener, { sync: true });
+    });
     willChange(objObserved1);
 
     sinon.assert.calledOnce(listener);
@@ -97,11 +109,11 @@ describe("Guard", function() {
     let listener1 = sinon.spy();
     let listener2 = sinon.spy();
 
-    guard(() => {
-      guard(() => {
+    guard(listener1, { capture: false, sync: true }).collect(() => {
+      guard(listener2, { capture: false, sync: true }).collect(() => {
         didObserve(objObserved1);
-      }, listener2, { capture: false, sync: true });
-    }, listener1, { capture: false, sync: true });
+      });
+    });
     
     willChange(objObserved1);
 
@@ -113,11 +125,11 @@ describe("Guard", function() {
     let listener1 = sinon.spy();
     let listener2 = sinon.spy();
 
-    guard(() => {
-      guard(() => {
+    guard(listener1, { capture: false, sync: true }).collect(() => {
+      guard(listener2, { capture: true, sync: true }).collect(() => {
         didObserve(objObserved1);
-      }, listener2, { capture: true, sync: true });
-    }, listener1, { capture: false, sync: true });
+      });
+    });
     
     willChange(objObserved1);
 
@@ -127,9 +139,9 @@ describe("Guard", function() {
 
   it("does not invoke listener if disposed before change", function() {
     let listener = sinon.spy();
-    let { dispose } = guard(() => {
+    let { dispose } = guard(listener, { sync: true }).collect(() => {
       didObserve(objObserved1);
-    }, listener, { sync: true });
+    });
     dispose();
     willChange(objObserved1);
 
@@ -138,9 +150,9 @@ describe("Guard", function() {
 
   it("invokes listener asynchronously after first observed changed", function(done) {
     let listener = sinon.spy();
-    guard(() => {
+    guard(listener, { sync: false }).collect(() => {
       didObserve(objObserved1);
-    }, listener, { sync: false });
+    });
     willChange(objObserved1);
 
     sinon.assert.notCalled(listener);
@@ -152,9 +164,9 @@ describe("Guard", function() {
 
   it("does not invoke listener asynchronously if disposed after change", function(done) {
     let listener = sinon.spy();
-    let { dispose } = guard(() => {
+    let { dispose } = guard(listener, { sync: false }).collect(() => {
       didObserve(objObserved1);
-    }, listener, { sync: false });
+    });
     willChange(objObserved1);
     
     dispose();

@@ -22,16 +22,15 @@ describe("Clock", function() {
 
   it("eventually updates", function(done) {
     let startTime;
-    guard(
-      () => {
-        startTime = observable.$;
-      }, () => {
-        setTimeout(() => {
-          let endTime = observable.$;
-          expect(endTime - startTime).to.be.at.least(1);
-          done();
-        }, 2);
-      }, { sync: true });
+    guard(() => {
+      setTimeout(() => {
+        let endTime = observable.$;
+        expect(endTime - startTime).to.be.at.least(1);
+        done();
+      }, 2);
+    }, { sync: true }).collect(() => {
+      startTime = observable.$;
+    });
   })
 
   it("reports same time until control returns to event loop", function() {
@@ -41,26 +40,23 @@ describe("Clock", function() {
   })
 
   it("keeps updating", function(done) {
-    guard(
-      () => {
-        let ignored = observable.$;
-      }, () => {
-        setImmediate(() => {
-          guard(
-            () => {
-              let ignored = observable.$;
-            }, () => {
-              done();
-            }, { sync: true });
-        });
-      }, { sync: true });
+    guard(() => {
+      setImmediate(() => {
+        guard(() => {
+            done();
+          }, { sync: true }).collect(() => {
+            let ignored = observable.$;
+          });
+      });
+    }, { sync: true }).collect(() => {
+      let ignored = observable.$;
+    });
   })
 
   it("automatically shuts down when it becomes obscure", function(done) {
-    guard(
-      () => {
-        let ignored = observable.$;
-      }, () => undefined, { sync: true });
+    guard(() => undefined, { sync: true }).collect(() => {
+      let ignored = observable.$;
+    });
     expect(clock.timeoutId).to.be.ok;
 
     setTimeout(() => {
@@ -71,10 +67,9 @@ describe("Clock", function() {
 
   it("automatically starts back up again when it ceases to be obscure", function(done) {
     let startTime;
-    guard(
-      () => {
-        startTime = observable.$;
-      }, () => undefined, { sync: true });
+    guard(() => undefined, { sync: true }).collect(() => {
+      startTime = observable.$;
+    });
     expect(clock.timeoutId).to.be.ok;
 
     setTimeout(() => {

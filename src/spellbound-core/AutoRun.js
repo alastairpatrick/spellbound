@@ -23,12 +23,12 @@ class AutoRun {
     }
     try {
       dispose = guard(() => {
-        action(this);
-        ++this.count;
-      }, () => {
         this.run(action);
       }, {
         capture: options.capture,
+      }).collect(() => {
+        action(this);
+        ++this.count;
       }).dispose;
     } finally {
       if (disposedInAction) {

@@ -52,11 +52,11 @@ describe("Component", function() {
     component.render();
     component.componentDidMount();
 
-    sinon.assert.notCalled(component.setState);
+    sinon.assert.calledOnce(component.setState);
     observable.$ = 8;
-    sinon.assert.notCalled(component.setState);
+    sinon.assert.calledOnce(component.setState);
     setImmediate(() => {
-      sinon.assert.calledOnce(component.setState);
+      sinon.assert.calledTwice(component.setState);
     });
   })
 
@@ -73,7 +73,7 @@ describe("Component", function() {
     observable.$ = 8;
     sinon.assert.notCalled(component.setState);
     component.componentDidMount();
-    sinon.assert.notCalled(component.setState);
+    sinon.assert.calledOnce(component.setState);
     setImmediate(() => {
       sinon.assert.calledOnce(component.setState);
     });
@@ -89,12 +89,30 @@ describe("Component", function() {
     component.componentDidMount();
     component.componentWillUnmount();
 
-    sinon.assert.notCalled(component.setState);
+    sinon.assert.calledOnce(component.setState);
     observable.$ = 8;
 
     setImmediate(function() {
-      sinon.assert.notCalled(component.setState);
+      sinon.assert.calledOnce(component.setState);
       done();
+    });
+  })
+
+  it("calls setState when additional dependency changes after mounting", function() {
+    let observable = new Observable(7);
+    let component = new TestComponent(() =>
+      <p>Test</p>
+    );
+    component.setState = sinon.spy();
+    component.render();
+    component.componentDidMount();
+    component.collect(() => observable.$);
+
+    sinon.assert.calledOnce(component.setState);
+    observable.$ = 8;
+    sinon.assert.calledOnce(component.setState);
+    setImmediate(() => {
+      sinon.assert.calledTwice(component.setState);
     });
   })
 

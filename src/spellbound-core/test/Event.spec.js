@@ -12,12 +12,12 @@ describe("Event", function() {
   })
 
   it("is not signalled by default", function() {
-    guard(() => event.observe(), listener, { sync: true });
+    guard(listener, { sync: true }).collect(() => event.observe());
     sinon.assert.notCalled(listener); 
   })
 
   it("can be signalled", function() {
-    guard(() => event.observe(), listener, { sync: true });
+    guard(listener, { sync: true }).collect(() => event.observe());
     event.signal();
     sinon.assert.calledOnce(listener); 
   })

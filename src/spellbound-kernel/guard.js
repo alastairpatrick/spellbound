@@ -2,7 +2,7 @@ import { collectObservations } from './collect';
 import { addChangeListener, removeChangeListener } from './change';
 import { taskQueue } from './task';
 
-const guard = (guarded, changed, options = {}) => {
+const guard = (changed, options = {}) => {
   let mutableChanged = changed;
   let dependencies = new Set();
 
@@ -30,15 +30,18 @@ const guard = (guarded, changed, options = {}) => {
     dependencies.clear();
   };
 
-  let value = collectObservations(guarded, (v) => {
-    dependencies.add(v);
-    addChangeListener(v, invoke);
-  }, options);
+  let collect = (guarded) => {
+    let value = collectObservations(guarded, (v) => {
+      dependencies.add(v);
+      addChangeListener(v, invoke);
+    }, options);
+
+    return { value, hasDependencies: dependencies.size, collect, dispose };
+  };
 
   return {
-    value,
+    collect,
     dispose,
-    hasDependencies: dependencies.size,
   };
 } 
 

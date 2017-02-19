@@ -6,19 +6,6 @@ import { unwrap } from '../spellbound-core';
 
 const noop = () => undefined;
 
-const UNMOUNTED = {
-  MOUNTED: false,
-  PENDING_SET_STATE: false,
-};
-const UNMOUNTED_PENDING_SETSTATE = {
-  MOUNTED: false,
-  PENDING_SET_STATE: true,
-};
-const MOUNTED = {
-  MOUNTED: true,
-  PENDING_SET_STATE: false, 
-};
-
 let patch = (obj, name, replacement) => {
   let baseMethod;
   if (typeof obj[name] === "function")
@@ -31,13 +18,14 @@ let patch = (obj, name, replacement) => {
   }  
 }
 
-class Component extends RealReact.Component {
+class Component extends RealReact.PureComponent {
   constructor() {
     super();
-   
+
     this._disposeGuard = noop;
-    this._status = UNMOUNTED;
-    
+    this._mounted = false;
+    this.invalidate = this.invalidate.bind(this);
+
     let propsObservable = {};
     let props = this.props;
 
@@ -62,22 +50,21 @@ class Component extends RealReact.Component {
       this._disposeGuard();
       this._disposeGuard = noop;
 
-      let { dispose, value } = guard(
-        () => original(unwrap),
-        () => {
-          if (this._status.MOUNTED)
-            this.setState(state => state)
-          else
-            this._status = UNMOUNTED_PENDING_SETSTATE;
-        }, { sync: false });
+      let { dispose, collect } = guard(
+        this.invalidate,
+        { sync: false });
       this._disposeGuard = dispose;
+      this.collect = (guarded) => collect(guarded).value;
+
+      let { value } = collect(() => original(unwrap));
       return value;
     });
 
     patch(this, 'componentDidMount', (original, ...args) => {
-      if (this._status.PENDING_SET_STATE)
-        this.setState(state => state);
-      this._status = MOUNTED;
+      this.setState(state => Object.assign(state || {}, {
+        dependencySerial: 0,
+      }));
+      this._mounted = true;
       return original(...args);
     });
 
@@ -86,6 +73,24 @@ class Component extends RealReact.Component {
       this._disposeGuard = noop;
       return original(...args);
     });
+  }
+
+  collect(guarded) {
+    return guarded();
+  }
+  
+  collecting(fn) {
+    return (...args) => {
+      return this.collect(() => fn(...args));
+    }
+  }
+  
+  invalidate() {
+    if (!this._mounted)
+      return;
+    this.setState(state => Object.assign(state || {}, {
+      dependencySerial: state.dependencySerial ? state.dependencySerial + 1 : 1,
+    }));
   }
 }
 

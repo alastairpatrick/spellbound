@@ -55,15 +55,14 @@ class Computed extends Observable {
       delete this.dispose;
     }
 
-    let guardResult = guard(this.read, () => {
+    let result = guard(() => {
       willChange(this);
       restoreDispose();
-    }, GUARD_OPTIONS);
-
-    this[VALUE_SYMBOL] = guardResult.value;
-    this._hasDependencies = guardResult.hasDependencies;
+    }, GUARD_OPTIONS).collect(this.read);
+    this[VALUE_SYMBOL] = result.value;
+    this._hasDependencies = result.hasDependencies;
     this.dispose = () => {
-      guardResult.dispose();
+      result.dispose();
       restoreDispose();
     };
 

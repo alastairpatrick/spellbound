@@ -4,7 +4,9 @@ const webpack = require('webpack');
 const env = require('./env');
 
 const DEFINE_PLUGIN = new webpack.DefinePlugin({
-  'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV)
+  'process.env': {
+    NODE_ENV: JSON.stringify(env.NODE_ENV),
+  },
 });
 
 const DEDUPE_PLUGIN = new webpack.optimize.DedupePlugin();
@@ -24,8 +26,9 @@ const COMMONS_CHUNK_PLUGIN = new webpack.optimize.CommonsChunkPlugin(
 
 module.exports = {
   entry: {
-    todomvc: path.join(__dirname, env.SRC_DIR, 'demo', 'todomvc', 'AppView.js'),
     spellbound: [path.join(__dirname, env.SRC_DIR, 'spellbound-core', 'index.js')],
+    todomvc: path.join(__dirname, env.SRC_DIR, 'demo', 'todomvc', 'AppView.js'),
+    'data-grid-demo': path.join(__dirname, env.SRC_DIR, 'demo', 'data-grid', 'main.js'),
   },
   output: {
     path: path.join(__dirname, env.CLIENT_DIR),
@@ -40,12 +43,13 @@ module.exports = {
   },
   devtool: "#source-map",
   plugins: env.IS_OPTIMIZED ? [
-    COMMONS_CHUNK_PLUGIN,
     DEFINE_PLUGIN,
+    COMMONS_CHUNK_PLUGIN,
     DEDUPE_PLUGIN,
     OCCURENCE_ORDER_PLUGIN,
     UGLIFY_PLUGIN,
   ] : [
+    DEFINE_PLUGIN,
     COMMONS_CHUNK_PLUGIN,
   ],
 };
