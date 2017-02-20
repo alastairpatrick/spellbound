@@ -64,7 +64,7 @@ class GridView extends React.Component {
   render() {
     return <ReactDataGrid
              columns={this._columns}
-             rowGetter={this.collecting(this.rowGetter)}
+             rowGetter={this.observing(this.rowGetter)}
              rowsCount={this.props.rows.length}
              minHeight={500}
            />;

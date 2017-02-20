@@ -43,7 +43,7 @@ describe("Component", function() {
     expect(component.render()).to.equal(dom);
   })
 
-  it("calls setState when dependency changes after mounting", function() {
+  it("calls setState when dependency changes after mounting", function(done) {
     let observable = new Observable(7);
     let component = new TestComponent(($) =>
       <p>Test {$(observable)}</p>
@@ -57,6 +57,7 @@ describe("Component", function() {
     sinon.assert.calledOnce(component.setState);
     setImmediate(() => {
       sinon.assert.calledTwice(component.setState);
+      done();
     });
   })
 
@@ -74,9 +75,6 @@ describe("Component", function() {
     sinon.assert.notCalled(component.setState);
     component.componentDidMount();
     sinon.assert.calledOnce(component.setState);
-    setImmediate(() => {
-      sinon.assert.calledOnce(component.setState);
-    });
   })
 
   it("does not render after unmount", function(done) {
@@ -91,14 +89,14 @@ describe("Component", function() {
 
     sinon.assert.calledOnce(component.setState);
     observable.$ = 8;
-
+    sinon.assert.calledOnce(component.setState);
     setImmediate(function() {
       sinon.assert.calledOnce(component.setState);
       done();
     });
   })
 
-  it("calls setState when additional dependency changes after mounting", function() {
+  it("calls setState when additional dependency changes after mounting", function(done) {
     let observable = new Observable(7);
     let component = new TestComponent(() =>
       <p>Test</p>
@@ -106,13 +104,33 @@ describe("Component", function() {
     component.setState = sinon.spy();
     component.render();
     component.componentDidMount();
-    component.collect(() => observable.$);
+    component.collectObservations(() => observable.$);
 
     sinon.assert.calledOnce(component.setState);
     observable.$ = 8;
     sinon.assert.calledOnce(component.setState);
     setImmediate(() => {
       sinon.assert.calledTwice(component.setState);
+      done();
+    });
+  })
+
+  it("can wrap function to collect observations", function(done) {
+    let observable = new Observable(7);
+    let component = new TestComponent(() =>
+      <p>Test</p>
+    );
+    component.setState = sinon.spy();
+    component.render();
+    component.componentDidMount();
+    component.observing(() => observable.$)();
+
+    sinon.assert.calledOnce(component.setState);
+    observable.$ = 8;
+    sinon.assert.calledOnce(component.setState);
+    setImmediate(() => {
+      sinon.assert.calledTwice(component.setState);
+      done();
     });
   })
 

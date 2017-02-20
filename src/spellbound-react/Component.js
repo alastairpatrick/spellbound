@@ -54,7 +54,7 @@ class Component extends RealReact.PureComponent {
         this.invalidate,
         { sync: false });
       this._disposeGuard = dispose;
-      this.collect = (guarded) => collect(guarded).value;
+      this.collectObservations = (guarded) => collect(guarded).value;
 
       let { value } = collect(() => original(unwrap));
       return value;
@@ -71,17 +71,18 @@ class Component extends RealReact.PureComponent {
     patch(this, 'componentWillUnmount', (original, ...args) => {
       this._disposeGuard();
       this._disposeGuard = noop;
+      this._mounted = false;
       return original(...args);
     });
   }
 
-  collect(guarded) {
+  collectObservations(guarded) {
     return guarded();
   }
   
-  collecting(fn) {
+  observing(fn) {
     return (...args) => {
-      return this.collect(() => fn(...args));
+      return this.collectObservations(() => fn(...args));
     }
   }
   
