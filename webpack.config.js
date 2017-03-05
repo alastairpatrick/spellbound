@@ -41,7 +41,7 @@ module.exports = {
       loader: 'babel-loader',
     }],
   },
-  devtool: "#source-map",
+  devtool: "#cheap-module-source-map",
   plugins: env.IS_OPTIMIZED ? [
     DEFINE_PLUGIN,
     COMMONS_CHUNK_PLUGIN,
