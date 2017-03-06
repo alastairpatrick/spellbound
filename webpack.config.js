@@ -26,9 +26,15 @@ const COMMONS_CHUNK_PLUGIN = new webpack.optimize.CommonsChunkPlugin(
 
 module.exports = {
   entry: {
-    spellbound: [path.join(__dirname, env.SRC_DIR, 'spellbound-core', 'index.js')],
-    todomvc: path.join(__dirname, env.SRC_DIR, 'demo', 'todomvc', 'AppView.js'),
-    'data-grid-demo': path.join(__dirname, env.SRC_DIR, 'demo', 'data-grid', 'main.js'),
+    spellbound: [
+      "babel-polyfill",
+      path.join(__dirname, env.SRC_DIR, 'spellbound-core', 'index.js'),
+      path.join(__dirname, env.SRC_DIR, 'spellbound-react', 'index.js'),
+      path.join(__dirname, env.SRC_DIR, 'spellbound-serialize', 'index.js'),
+      path.join(__dirname, env.SRC_DIR, 'spellbound-util', 'index.js'),
+    ],
+    todomvc: [path.join(__dirname, env.SRC_DIR, 'demo', 'todomvc', 'AppView.js')],
+    'data-grid-demo': [path.join(__dirname, env.SRC_DIR, 'demo', 'data-grid', 'main.js')],
   },
   output: {
     path: path.join(__dirname, env.CLIENT_DIR),
@@ -39,6 +45,9 @@ module.exports = {
       test: /\.js$/,
       include: path.join(__dirname, env.SRC_DIR),
       loader: 'babel-loader',
+      query: {
+        presets: ['react', 'es2015'],
+      },
     }],
   },
   devtool: "#cheap-module-source-map",
