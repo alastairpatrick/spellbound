@@ -4,6 +4,8 @@ const env = require('./env');
 const webpackConfig = require('./webpack.config.js');
 
 module.exports = function(grunt) {
+  require("grunt-timer").init(grunt);
+
   grunt.initConfig({
     eslint: {
       server: {
@@ -12,6 +14,8 @@ module.exports = function(grunt) {
           configFile: path.join(__dirname, '.eslintrc.js'),
           silent: true,
           format: 'stylish',
+          cache: true,
+          cacheLocation: path.join(__dirname, '.eslintcache'),
         }
       },
     },
@@ -64,7 +68,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-webpack');
   grunt.loadNpmTasks('gruntify-eslint');
 
-  grunt.registerTask('build', ['mochaTest', 'eslint', 'touch']);
+  grunt.registerTask('build', ['mochaTest', 'touch', 'eslint']);
   grunt.registerTask('test', ['mochaTest', 'eslint']);
   grunt.registerTask('prepublish', ['webpack:build']);
   grunt.registerTask('serve', ['webpack:build', 'express', 'watch']);
