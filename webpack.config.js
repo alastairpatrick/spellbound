@@ -27,16 +27,21 @@ const COMMONS_CHUNK_PLUGIN = new webpack.optimize.CommonsChunkPlugin(
   "spellbound.js");
 
 module.exports = {
+  context: SRC_DIR,
   entry: {
     spellbound: [
-      "babel-polyfill",
-      path.join(SRC_DIR, 'spellbound-core', 'index.js'),
-      path.join(SRC_DIR, 'spellbound-react', 'index.js'),
-      path.join(SRC_DIR, 'spellbound-serialize', 'index.js'),
-      path.join(SRC_DIR, 'spellbound-util', 'index.js'),
+      'babel-polyfill',
+      './spellbound-core',
+      './spellbound-react',
+      './spellbound-serialize',
+      './spellbound-util',
     ],
-    todomvc: [path.join(SRC_DIR, 'demo', 'todomvc', 'AppView.js')],
-    'data-grid-demo': [path.join(SRC_DIR, 'demo', 'data-grid', 'main.js')],
+    todomvc: [
+      './demo/todomvc/AppView',
+    ],
+    'data-grid-demo': [
+      './demo/data-grid/main',
+    ],
   },
   output: {
     path: path.join(__dirname, env.CLIENT_DIR),
@@ -45,7 +50,7 @@ module.exports = {
   module: {
     loaders: [{
       test: /\.js$/,
-      include: path.join(SRC_DIR),
+      include: path.join(__dirname, env.SRC_DIR),
       loader: 'babel-loader',
       query: env.IS_OPTIMIZED ? {
         presets: ['react', 'es2015'],
@@ -54,6 +59,10 @@ module.exports = {
         plugins: ['transform-es2015-modules-commonjs'],
       },
     }],
+  },
+  node: {
+    __filename: true,
+    __dirname: true,
   },
   devtool: env.IS_OPTIMIZED ? "#source-map" : "#eval",
   plugins: env.IS_OPTIMIZED ? [
