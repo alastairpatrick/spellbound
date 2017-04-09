@@ -8,6 +8,7 @@ import { Todo, todos } from './model';
 import { StatsView } from './StatsView';
 import { TodoView } from './TodoView';
 
+import { cat } from '../../spellbound-cat';
 
 class AppView extends React.Component {
   constructor() {
@@ -87,7 +88,15 @@ class AppView extends React.Component {
   }
 }
 
+cat(__filename).providesEach({
+  AppView,
+});
+
 ReactDOM.render(
   <AppView/>,
   document.getElementById("main")
 );
+
+export {
+  AppView,
+}

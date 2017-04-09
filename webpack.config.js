@@ -27,20 +27,20 @@ const COMMONS_CHUNK_PLUGIN = new webpack.optimize.CommonsChunkPlugin(
   "spellbound.js");
 
 module.exports = {
-  context: SRC_DIR,
+  context: __dirname,
   entry: {
     spellbound: [
       'babel-polyfill',
-      './spellbound-core',
-      './spellbound-react',
-      './spellbound-serialize',
-      './spellbound-util',
+      './src/spellbound-core',
+      './src/spellbound-react',
+      './src/spellbound-serialize',
+      './src/spellbound-util',
     ],
     todomvc: [
-      './demo/todomvc/AppView',
+      './src/demo/todomvc/AppView',
     ],
     'data-grid-demo': [
-      './demo/data-grid/main',
+      './src/demo/data-grid/main',
     ],
   },
   output: {
