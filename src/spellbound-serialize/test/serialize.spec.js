@@ -1,7 +1,7 @@
-import { expect } from 'chai';
+const { expect } = require('chai');
 
-import { Observable, isWritableObservable } from '../../spellbound-core';
-import { serialize, Namespace, STRUCTURED_CLONE_DEFAULTS } from '..';
+const { Observable, isWritableObservable } = require('../../spellbound-core');
+const { serialize, Namespace, STRUCTURED_CLONE_DEFAULTS } = require('..');
 
 
 describe("serialize", function() {

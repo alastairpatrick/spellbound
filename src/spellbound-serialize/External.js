@@ -1,4 +1,4 @@
-import { isObservable } from '../spellbound-core';
+const { isObservable } = require('../spellbound-core');
 
 const RE_MUST_ESCAPE = /^\$/;
 const RE_ESCAPED = /^\$\$/;
@@ -397,7 +397,7 @@ const STRUCTURED_CLONE_DEFAULTS = {
   ".Uint32Array": new NoopExternal(Uint32Array),
 }
 
-export {
+module.exports = {
   External,
   JSON_DEFAULTS,
   STRUCTURED_CLONE_DEFAULTS,

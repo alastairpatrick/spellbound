@@ -1,6 +1,6 @@
-import { CAT, cat } from "./cat";
+const { CAT, cat } = require("./cat");
 
-export {
+module.exports = {
   CAT,
   cat,
 }

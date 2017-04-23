@@ -1,9 +1,9 @@
-import { renderToStaticMarkup } from 'react-dom/server';
-import sinon from 'sinon';
-import { expect } from 'chai';
+const { renderToStaticMarkup } = require('react-dom/server');
+const sinon = require('sinon');
+const { expect } = require('chai');
 
-import { Observable, Computed } from '../../spellbound-core';
-import React from '..';
+const { Observable, Computed } = require('../../spellbound-core');
+const React = require('..');
 
 
 class StatusComponent extends React.Component {

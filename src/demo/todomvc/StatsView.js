@@ -1,8 +1,8 @@
-import cx from 'classnames';
+const cx = require('classnames');
 
-import React from '../../spellbound-react';
+const React = require('../../spellbound-react');
 
-import { todos } from './model';
+const { todos } = require('./model');
 
 
 class StatsView extends React.Component {
@@ -42,6 +42,6 @@ class StatsView extends React.Component {
   }
 }
 
-export {
+module.exports = {
   StatsView,
 }

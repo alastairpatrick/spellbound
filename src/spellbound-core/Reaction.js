@@ -1,4 +1,4 @@
-import { guard } from '../spellbound-kernel';
+const { guard } = require('../spellbound-kernel');
 
 
 const noop = () => undefined;
@@ -65,7 +65,7 @@ const reaction = (read, when, options) => {
   return new Reaction().evaluate(read, when, options);
 }
 
-export {
+module.exports = {
   Reaction,
   reaction,
 }

@@ -1,6 +1,6 @@
-import { expect } from 'chai';
+const { expect } = require('chai');
 
-import { hasEnumerable } from '..';
+const { hasEnumerable } = require('..');
 
 const objectPrototype = Object.prototype;
 

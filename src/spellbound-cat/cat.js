@@ -82,7 +82,7 @@ cat = (...names) => {
   return entry;
 }
 
-export {
+module.exports = {
   CAT,
   cat,
 }

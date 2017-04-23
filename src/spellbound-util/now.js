@@ -1,6 +1,6 @@
 
-import { hasChangeListeners } from '../spellbound-kernel';
-import { Computed, Event } from '../spellbound-core';
+const { hasChangeListeners } = require('../spellbound-kernel');
+const { Computed, Event } = require('../spellbound-core');
 
 const MIN_DELAY = 1;
 
@@ -51,7 +51,7 @@ const now = {
   hours: new Clock(24 * 60 * 1000).observable,
 }
 
-export {
+module.exports = {
   Clock,
   now,
 }

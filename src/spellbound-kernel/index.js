@@ -1,4 +1,4 @@
-import {
+const {
   addChangeListener,
   addObscureListener,
   addWakeListener,
@@ -8,16 +8,16 @@ import {
   removeWakeListener,
   setWillChange,
   willChange,
-} from './change';
+} = require('./change');
 
-import { TaskQueue, taskQueue } from './task';
-import { didObserve, setDidObserve, assertNotInterceptingObservations } from './observe';
-import { collectObservations } from './collect';
-import { guard } from './guard';
-import { newSymbol } from './symbol';
-import { hasEnumerable } from './has';
+const { TaskQueue, taskQueue } = require('./task');
+const { didObserve, setDidObserve, assertNotInterceptingObservations } = require('./observe');
+const { collectObservations } = require('./collect');
+const { guard } = require('./guard');
+const { newSymbol } = require('./symbol');
+const { hasEnumerable } = require('./has');
 
-export {
+module.exports = {
   TaskQueue,
   addChangeListener,
   addObscureListener,

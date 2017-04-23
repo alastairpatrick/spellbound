@@ -1,7 +1,7 @@
-import sinon from 'sinon';
+const sinon = require('sinon');
 
-import { guard } from '../../spellbound-kernel';
-import { Event } from '..';
+const { guard } = require('../../spellbound-kernel');
+const { Event } = require('..');
 
 describe("Event", function() {
   let event, listener;

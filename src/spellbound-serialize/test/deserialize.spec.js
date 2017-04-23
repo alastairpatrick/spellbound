@@ -1,7 +1,7 @@
-import { expect } from 'chai';
+const { expect } = require('chai');
 
-import { Computed, Observable, isWritableObservable } from '../../spellbound-core';
-import { Namespace, deserialize } from '..';
+const { Computed, Observable, isWritableObservable } = require('../../spellbound-core');
+const { Namespace, deserialize } = require('..');
 
 
 describe("deserialize", function() {

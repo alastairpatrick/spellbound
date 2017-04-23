@@ -1,10 +1,10 @@
-import { AutoRun, autorun } from './AutoRun';
-import { Computed, computed } from './Computed';
-import { Event } from './Event';
-import { Reaction, reaction } from './Reaction';
-import { Observable, isObservable, isWritableObservable, mutate, observable, unwrap } from './Observable';
+const { AutoRun, autorun } = require('./AutoRun');
+const { Computed, computed } = require('./Computed');
+const { Event } = require('./Event');
+const { Reaction, reaction } = require('./Reaction');
+const { Observable, isObservable, isWritableObservable, mutate, observable, unwrap } = require('./Observable');
 
-export {
+module.exports = {
   AutoRun,
   Computed,
   Event,

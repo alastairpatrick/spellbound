@@ -1,7 +1,7 @@
-import sinon from 'sinon';
-import { expect } from 'chai';
+const sinon = require('sinon');
+const { expect } = require('chai');
 
-import { didObserve, setDidObserve, assertNotInterceptingObservations } from '..';
+const { didObserve, setDidObserve, assertNotInterceptingObservations } = require('..');
 
 describe("Observe", function() {
   it("can be called while not intercepting", function() {

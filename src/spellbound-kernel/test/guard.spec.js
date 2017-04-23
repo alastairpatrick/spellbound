@@ -1,7 +1,7 @@
-import sinon from 'sinon';
-import { expect } from 'chai';
+const sinon = require('sinon');
+const { expect } = require('chai');
 
-import { didObserve, guard, willChange } from '..';
+const { didObserve, guard, willChange } = require('..');
 
 describe("Guard", function() {
   let objObserved1 = {};

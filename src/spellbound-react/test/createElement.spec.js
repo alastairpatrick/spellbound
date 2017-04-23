@@ -1,7 +1,7 @@
-import { expect } from 'chai';
+const { expect } = require('chai');
 
-import { observable } from '../../spellbound-core';
-import React from '..';
+const { observable } = require('../../spellbound-core');
+const React = require('..');
 
 
 class TestComponent extends React.Component {

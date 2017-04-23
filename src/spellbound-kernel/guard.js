@@ -1,6 +1,6 @@
-import { collectObservations } from './collect';
-import { addChangeListener, removeChangeListener } from './change';
-import { taskQueue } from './task';
+const { collectObservations } = require('./collect');
+const { addChangeListener, removeChangeListener } = require('./change');
+const { taskQueue } = require('./task');
 
 const guard = (changed, options = {}) => {
   let mutableChanged = changed;
@@ -45,6 +45,6 @@ const guard = (changed, options = {}) => {
   };
 } 
 
-export {
+module.exports = {
   guard,
 }

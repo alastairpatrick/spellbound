@@ -1,6 +1,6 @@
-import { unwrap } from '../spellbound-core';
-import { GRAY } from './External';
-import { EMPTY_NAMESPACE } from './Namespace';
+const { unwrap } = require('../spellbound-core');
+const { GRAY } = require('./External');
+const { EMPTY_NAMESPACE } = require('./Namespace');
 
 
 const getPrototypeOf = Object.getPrototypeOf;
@@ -132,7 +132,7 @@ const serialize = (u, opts = {}) => {
   throw new Error(`Unknown format '${format}'.`);
 }
 
-export {
+module.exports = {
   defaultFilter,
   serialize,
 }

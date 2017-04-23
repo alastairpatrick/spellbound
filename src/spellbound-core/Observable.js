@@ -1,4 +1,4 @@
-import { didObserve, willChange, newSymbol } from '../spellbound-kernel';
+const { didObserve, willChange, newSymbol } = require('../spellbound-kernel');
 
 
 const VALUE_SYMBOL = newSymbol("value");
@@ -89,7 +89,7 @@ const mutate = (mutator, ...vs) => {
 }
 
 
-export {
+module.exports = {
   Observable,
   VALUE_SYMBOL,
   isObservable,

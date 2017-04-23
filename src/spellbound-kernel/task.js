@@ -1,4 +1,4 @@
-import _ from 'lodash';
+const _ = require('lodash');
 
 let activeTasksQueues = [];
 
@@ -58,7 +58,7 @@ const taskQueue = {
   finish: new TaskQueue(200),
 };
 
-export {
+module.exports = {
   TaskQueue,
   taskQueue,
 }

@@ -1,4 +1,4 @@
-import { guard } from '../spellbound-kernel';
+const { guard } = require('../spellbound-kernel');
 
 
 const noop = () => undefined;
@@ -45,7 +45,7 @@ class AutoRun {
 
 const autorun = (action) => new AutoRun().run(action);
 
-export {
+module.exports = {
   AutoRun,
   autorun,
 }

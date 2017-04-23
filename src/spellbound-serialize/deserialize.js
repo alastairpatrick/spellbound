@@ -1,6 +1,6 @@
-import { GRAY, OBJECT_EXTERNAL } from './External';
-import { EMPTY_NAMESPACE } from './Namespace';
-import { defaultFilter } from './serialize';
+const { GRAY, OBJECT_EXTERNAL } = require('./External');
+const { EMPTY_NAMESPACE } = require('./Namespace');
+const { defaultFilter } = require('./serialize');
 
 const getPrototypeOf = Object.getPrototypeOf;
 const has = Object.prototype.hasOwnProperty;
@@ -160,6 +160,6 @@ const deserialize = (serialized, opts = {}) => {
   return deserializeJS(js, opts);
 }
 
-export {
+module.exports = {
   deserialize,
 }

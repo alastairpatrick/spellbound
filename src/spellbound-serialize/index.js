@@ -1,9 +1,9 @@
-import { JSON_DEFAULTS, STRUCTURED_CLONE_DEFAULTS } from './External';
-import { Namespace } from './Namespace';
-import { deserialize } from './deserialize';
-import { serialize } from './serialize';
+const { JSON_DEFAULTS, STRUCTURED_CLONE_DEFAULTS } = require('./External');
+const { Namespace } = require('./Namespace');
+const { deserialize } = require('./deserialize');
+const { serialize } = require('./serialize');
 
-export {
+module.exports = {
   STRUCTURED_CLONE_DEFAULTS,
   JSON_DEFAULTS,
   Namespace,

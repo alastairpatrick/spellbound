@@ -1,9 +1,9 @@
-import ReactDOM from 'react-dom';
-import ReactDataGrid from 'react-data-grid';
+const ReactDOM = require('react-dom');
+const ReactDataGrid = require('react-data-grid');
 
-import { observable } from '../../spellbound-core';
-import { serialize } from '../../spellbound-serialize';
-import React from '../../spellbound-react';
+const { observable } = require('../../spellbound-core');
+const { serialize } = require('../../spellbound-serialize');
+const React = require('../../spellbound-react');
 
 const lastTime = observable(0);
 

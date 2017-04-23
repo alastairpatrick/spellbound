@@ -1,14 +1,14 @@
-import { Router } from 'director';
-import ReactDOM from 'react-dom';
+const { Router } = require('director');
+const ReactDOM = require('react-dom');
 
-import { computed, observable } from '../../spellbound-core';
-import React from '../../spellbound-react';
+const { computed, observable } = require('../../spellbound-core');
+const React = require('../../spellbound-react');
 
-import { Todo, todos } from './model';
-import { StatsView } from './StatsView';
-import { TodoView } from './TodoView';
+const { Todo, todos } = require('./model');
+const { StatsView } = require('./StatsView');
+const { TodoView } = require('./TodoView');
 
-import { cat } from '../../spellbound-cat';
+const { cat } = require('../../spellbound-cat');
 
 class AppView extends React.Component {
   constructor() {
@@ -97,6 +97,6 @@ ReactDOM.render(
   document.getElementById("main")
 );
 
-export {
+module.exports = {
   AppView,
 }

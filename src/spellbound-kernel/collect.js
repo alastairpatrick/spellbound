@@ -1,4 +1,4 @@
-import { didObserve, setDidObserve } from './observe';
+const { didObserve, setDidObserve } = require('./observe');
 
 const collectObservations = (monitored, callback, options = {}) => {
   let observed = new Set();
@@ -17,6 +17,6 @@ const collectObservations = (monitored, callback, options = {}) => {
   }
 }
 
-export {
+module.exports = {
   collectObservations,
 }

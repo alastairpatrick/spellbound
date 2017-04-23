@@ -1,4 +1,4 @@
-import { taskQueue } from './task';
+const { taskQueue } = require('./task');
 
 
 const infos = new WeakMap();
@@ -129,7 +129,7 @@ const removeObscureListener = (v, listener) => {
 }
 
 
-export {
+module.exports = {
   addChangeListener,
   addObscureListener,
   addWakeListener,

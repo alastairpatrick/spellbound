@@ -1,5 +1,5 @@
-import { computed, mutate, observable } from '../spellbound-core';
-import { JSON_DEFAULTS, OBJECT_EXTERNAL, External } from './External';
+const { computed, mutate, observable } = require('../spellbound-core');
+const { JSON_DEFAULTS, OBJECT_EXTERNAL, External } = require('./External');
 
 const OBJECT_NAME_EXTERNAL = {
   name: "",
@@ -115,7 +115,7 @@ class Namespace {
 
 const EMPTY_NAMESPACE = new Namespace();
 
-export {
+module.exports = {
   EMPTY_NAMESPACE,
   Namespace,
 }

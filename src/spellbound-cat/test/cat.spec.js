@@ -1,6 +1,6 @@
-import { expect } from 'chai';
+const { expect } = require('chai');
 
-import { CAT, cat } from '..';
+const { CAT, cat } = require('..');
 
 class A {
 }
@@ -8,7 +8,7 @@ class A {
 const add = (a, b) => a + b;
 const sub = (a, b) => a - b;
 
-export {
+module.exports = {
   A,
   add,
 }

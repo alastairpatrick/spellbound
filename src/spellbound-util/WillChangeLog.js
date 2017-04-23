@@ -1,5 +1,5 @@
-import { setWillChange } from '../spellbound-kernel';
-import { Observable } from '../spellbound-core';
+const { setWillChange } = require('../spellbound-kernel');
+const { Observable } = require('../spellbound-core');
 
 
 class WillChangeLog {
@@ -38,6 +38,6 @@ class WillChangeLog {
   }
 }
 
-export {
+module.exports = {
   WillChangeLog,
 }

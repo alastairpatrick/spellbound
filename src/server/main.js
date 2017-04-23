@@ -1,5 +1,5 @@
-import path from 'path';
-import Express from 'express';
+const path = require('path');
+const Express = require('express');
 
 
 const app = new Express();

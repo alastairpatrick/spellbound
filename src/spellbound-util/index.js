@@ -1,7 +1,7 @@
-import { Clock, now } from './now';
-import { WillChangeLog } from './WillChangeLog';
+const { Clock, now } = require('./now');
+const { WillChangeLog } = require('./WillChangeLog');
 
-export {
+module.exports = {
   WillChangeLog,
   Clock,
   now,

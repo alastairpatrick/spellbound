@@ -1,7 +1,7 @@
-import { autorun, computed, isWritableObservable, mutate, observable } from '../../spellbound-core';
-import { uuid } from './util';
+const { autorun, computed, isWritableObservable, mutate, observable } = require('../../spellbound-core');
+const { uuid } = require('./util');
 
-import { serialize, deserialize, Namespace } from '../../spellbound-serialize';
+const { serialize, deserialize, Namespace } = require('../../spellbound-serialize');
 
 const namespace = new Namespace();
 
@@ -99,7 +99,7 @@ namespace.add({TodoList, Todo});
 
 const todos = new TodoList("spellbound-todos");
 
-export {
+module.exports = {
   Todo,
   todos,
 }

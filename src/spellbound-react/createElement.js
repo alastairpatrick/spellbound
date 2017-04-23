@@ -1,6 +1,6 @@
-import RealReact from 'react';
+const RealReact = require('react');
 
-import { unwrap, isWritableObservable } from '../spellbound-core';
+const { unwrap, isWritableObservable } = require('../spellbound-core');
 
 const WRITABLE_PROPERTIES = ["value", "checked"];
 
@@ -46,6 +46,6 @@ const createElement = (type, props, ...children) => {
   return RealReact.createElement(type, unwrappedProps, ...unwrappedChildren);
 }
 
-export {
+module.exports = {
   createElement,
 }

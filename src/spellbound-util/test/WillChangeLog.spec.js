@@ -1,9 +1,9 @@
-import sinon from 'sinon';
-import { expect } from 'chai';
+const sinon = require('sinon');
+const { expect } = require('chai');
 
-import { addChangeListener } from '../../spellbound-kernel';
-import { Event, observable } from '../../spellbound-core';
-import { WillChangeLog } from '..';
+const { addChangeListener } = require('../../spellbound-kernel');
+const { Event, observable } = require('../../spellbound-core');
+const { WillChangeLog } = require('..');
 
 
 describe("WillChangeLog", function() {

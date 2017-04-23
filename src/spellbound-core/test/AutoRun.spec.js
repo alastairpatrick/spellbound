@@ -1,7 +1,7 @@
-import sinon from 'sinon';
-import { expect } from 'chai';
+const sinon = require('sinon');
+const { expect } = require('chai');
 
-import { AutoRun, Observable } from '..';
+const { AutoRun, Observable } = require('..');
 
 describe("Reaction", function() {
   let action, autorun, observable;

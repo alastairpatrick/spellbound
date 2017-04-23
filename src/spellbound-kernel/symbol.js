@@ -9,6 +9,6 @@ if (typeof Symbol === "function") {
   }
 }
 
-export {
+module.exports = {
   newSymbol,
 }

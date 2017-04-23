@@ -1,4 +1,4 @@
-import { taskQueue } from './task';
+const { taskQueue } = require('./task');
 
 const notObserving = () => undefined;
 let didObserveFn = notObserving;
@@ -28,7 +28,7 @@ const assertNotInterceptingObservations = (msg = "Unexpectedly intercepting obse
     throw new Error(msg);
 }
 
-export {
+module.exports = {
   assertNotInterceptingObservations,
   didObserve,
   setDidObserve,

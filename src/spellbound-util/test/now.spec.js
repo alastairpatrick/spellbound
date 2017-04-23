@@ -1,7 +1,7 @@
-import { expect } from 'chai';
+const { expect } = require('chai');
 
-import { guard } from '../../spellbound-kernel';
-import { Clock } from '..';
+const { guard } = require('../../spellbound-kernel');
+const { Clock } = require('..');
 
 
 describe("Clock", function() {

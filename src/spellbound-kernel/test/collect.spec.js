@@ -1,7 +1,7 @@
-import sinon from 'sinon';
-import { expect } from 'chai';
+const sinon = require('sinon');
+const { expect } = require('chai');
 
-import { didObserve, collectObservations } from '..';
+const { didObserve, collectObservations } = require('..');
 
 describe("Collect", function() {
   it("returns value computed while collecting observations", function() {

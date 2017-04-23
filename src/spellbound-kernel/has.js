@@ -8,6 +8,6 @@ const hasEnumerable = (obj, n) => {
   return n in obj;
 }
 
-export {
+module.exports = {
   hasEnumerable
 }

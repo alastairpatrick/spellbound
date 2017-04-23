@@ -1,7 +1,7 @@
-import sinon from 'sinon';
-import { expect } from 'chai';
+const sinon = require('sinon');
+const { expect } = require('chai');
 
-import {
+const {
   addChangeListener,
   addObscureListener,
   addWakeListener,
@@ -11,7 +11,7 @@ import {
   removeWakeListener,
   setWillChange,
   willChange,
-} from '..';
+} = require('..');
 
 describe("Change tracking", function() {
   let listener1, listener2;

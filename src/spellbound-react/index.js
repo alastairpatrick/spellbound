@@ -1,9 +1,9 @@
-import React from 'react';
+const React = require('react');
 
-import { Component } from './Component';
-import { createElement } from './createElement';
+const { Component } = require('./Component');
+const { createElement } = require('./createElement');
 
-export default Object.assign(Object.create(React), {
+module.exports = Object.assign(Object.create(React), {
   Component,
   createElement,
 })

@@ -1,4 +1,4 @@
-import { didObserve, willChange } from '../spellbound-kernel';
+const { didObserve, willChange } = require('../spellbound-kernel');
 
 class Event {
   observe() {
@@ -10,6 +10,6 @@ class Event {
   }
 }
 
-export {
+module.exports = {
   Event
 }

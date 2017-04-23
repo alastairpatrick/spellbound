@@ -1,10 +1,10 @@
-import {
+const {
   addObscureListener,
   guard,
   willChange,
-} from '../spellbound-kernel';
+} = require('../spellbound-kernel');
 
-import { Observable, VALUE_SYMBOL } from './Observable';
+const { Observable, VALUE_SYMBOL } = require('./Observable');
 
 
 const UNCOMPUTED = {
@@ -95,7 +95,7 @@ class Computed extends Observable {
 
 const computed = (options) => new Computed(options);
 
-export {
+module.exports = {
   Computed,
   computed,
 }

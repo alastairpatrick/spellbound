@@ -1,8 +1,8 @@
-import sinon from 'sinon';
-import { expect } from 'chai';
+const sinon = require('sinon');
+const { expect } = require('chai');
 
-import { collectObservations, addChangeListener, removeChangeListener } from '../../spellbound-kernel';
-import { Observable, isObservable, isWritableObservable, mutate, unwrap } from '..';
+const { collectObservations, addChangeListener, removeChangeListener } = require('../../spellbound-kernel');
+const { Observable, isObservable, isWritableObservable, mutate, unwrap } = require('..');
 
 
 describe("Observable", function() {

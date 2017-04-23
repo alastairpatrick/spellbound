@@ -1,7 +1,7 @@
-import RealReact from 'react';
+const RealReact = require('react');
 
-import { didObserve, guard, willChange } from '../spellbound-kernel';
-import { unwrap } from '../spellbound-core';
+const { didObserve, guard, willChange } = require('../spellbound-kernel');
+const { unwrap } = require('../spellbound-core');
 
 
 const noop = () => undefined;
@@ -96,6 +96,6 @@ class Component extends RealReact.PureComponent {
 }
 
 
-export {
+module.exports = {
   Component,
 }

@@ -1,9 +1,9 @@
-import cx from 'classnames';
+const cx = require('classnames');
 
-import { computed, observable } from '../../spellbound-core';
-import React from '../../spellbound-react';
+const { computed, observable } = require('../../spellbound-core');
+const React = require('../../spellbound-react');
 
-import { todos } from './model';
+const { todos } = require('./model');
 
 
 class TodoView extends React.Component {
@@ -77,6 +77,6 @@ class TodoView extends React.Component {
   }
 }
 
-export {
+module.exports = {
   TodoView,
 }
