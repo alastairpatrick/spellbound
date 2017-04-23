@@ -15,8 +15,7 @@ const BUILD_DIR = 'build/';
 module.exports = {
   NODE_ENV: NODE_ENV,
   IS_OPTIMIZED: IS_OPTIMIZED,
-  SRC_DIR: 'src/',
+  SRC_DIR: './',
   BUILD_DIR: BUILD_DIR,
   CLIENT_DIR: path.join(BUILD_DIR, 'client/', NODE_ENV),
-  SERVER_DIR: path.join('src'),
 };

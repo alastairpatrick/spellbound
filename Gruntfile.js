@@ -7,19 +7,6 @@ module.exports = function(grunt) {
   require("grunt-timer").init(grunt);
 
   grunt.initConfig({
-    eslint: {
-      server: {
-        src: [path.join(env.SRC_DIR, '/**/*.js')],
-        options: {
-          configFile: path.join(__dirname, '.eslintrc.js'),
-          silent: true,
-          format: 'stylish',
-          cache: true,
-          cacheLocation: path.join(__dirname, '.eslintcache'),
-        }
-      },
-    },
-
     mochaTest: {
       server: {
         options: {
@@ -43,7 +30,7 @@ module.exports = function(grunt) {
     express: {
       server: {
         options: {
-          script: path.join(env.SRC_DIR, 'server/main.js'),
+          script: path.join(env.SRC_DIR, 'demo/server.js'),
           node_env: env.NODE_ENV,
           opts: ['--require', 'babel-core/register'],
         },
@@ -66,12 +53,8 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-mocha-test');
   grunt.loadNpmTasks('grunt-touch');
   grunt.loadNpmTasks('grunt-webpack');
-  grunt.loadNpmTasks('gruntify-eslint');
 
-  grunt.registerTask('build', ['mochaTest', 'touch', 'eslint']);
-  grunt.registerTask('test', ['mochaTest', 'eslint']);
-  grunt.registerTask('prepublish', ['webpack:build']);
+  grunt.registerTask('build', ['mochaTest', 'touch']);
   grunt.registerTask('serve', ['webpack:build', 'express', 'watch']);
-
-  grunt.registerTask('default', ['test', 'prepublish']);  
+  grunt.registerTask('default', ['serve']);  
 };

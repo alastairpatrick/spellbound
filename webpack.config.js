@@ -31,16 +31,16 @@ module.exports = {
   entry: {
     spellbound: [
       'babel-polyfill',
-      './src/spellbound-core',
-      './src/spellbound-react',
-      './src/spellbound-serialize',
-      './src/spellbound-util',
+      './core',
+      './react',
+      './serialize',
+      './util',
     ],
     todomvc: [
-      './src/demo/todomvc/AppView',
+      './demo/todomvc/AppView',
     ],
     'data-grid-demo': [
-      './src/demo/data-grid/main',
+      './demo/data-grid/main',
     ],
   },
   output: {
